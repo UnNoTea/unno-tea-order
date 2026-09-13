@@ -55,6 +55,23 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 @keyframes unoAlertPulse{from{transform:scale(1)}to{transform:scale(1.008)}}
 </style>
 
+
+<style id="uno-customer-status">
+#customerOrderStatus{
+  display:none;position:fixed;left:50%;top:82px;transform:translateX(-50%);
+  z-index:60;width:min(520px,calc(100% - 28px));border-radius:16px;
+  padding:13px 14px;background:#111;color:#fff;box-shadow:0 12px 36px #0004
+}
+#customerOrderStatus.show{display:block}
+#customerOrderStatus.doing{background:#b54708}
+#customerOrderStatus.done{background:#1f7a45}
+#customerOrderStatus .st-title{font-weight:900;font-size:15px}
+#customerOrderStatus .st-sub{font-size:12px;opacity:.9;margin-top:3px}
+#notifyPermission{
+  margin-top:8px;border:0;border-radius:10px;padding:8px 10px;font-weight:800;background:#fff;color:#111
+}
+</style>
+
 <style id="uno-motion-v3">
 @media (prefers-reduced-motion: no-preference){
   :root{--spring:cubic-bezier(.22,1,.36,1);--press:cubic-bezier(.2,.8,.2,1)}
@@ -82,6 +99,11 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="table" class="table">Bàn —</div></div></header>
+<div id="customerOrderStatus">
+  <div class="st-title" id="customerStatusTitle">Đơn hàng đã được cập nhật</div>
+  <div class="st-sub" id="customerStatusSub"></div>
+  <button id="notifyPermission" type="button" onclick="enableCustomerNotifications()" style="display:none">🔔 Cho phép thông báo</button>
+</div>
 
 <main id="customer">
 <section class="hero"><img src="logo.jpg"><div><h1>Menu hôm nay</h1><p>Quét QR, chọn món và gửi order trực tiếp cho quán.</p></div></section>
@@ -128,8 +150,12 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 const cfg=window.UNO_CONFIG||{}; const ready=cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_URL.includes("PASTE_");
 const sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const params=new URLSearchParams(location.search);
+const pathName=location.pathname.replace(/\/+$/,"").toLowerCase();
+const isAdminPath=pathName==="/admin";
+const isOnlinePath=pathName==="/online";
 const table=params.get("table")||"—";
 let orderParam=(params.get("order")||"").toLowerCase();
+if(isOnlinePath && !orderParam) orderParam="online";
 let orderMode=["delivery","pickup"].includes(orderParam)?orderParam:(orderParam==="online"?"online":"table");
 function updateOrderModeUI(){
   const remote=orderMode!=="table";
@@ -150,6 +176,7 @@ function updateOrderModeUI(){
 function setOrderMode(mode){
   orderMode=mode;
   const u=new URL(location.href);
+  u.pathname="/online";
   u.searchParams.delete("table");
   u.searchParams.set("order",mode);
   history.replaceState(null,"",u);
@@ -217,6 +244,10 @@ async function placeOrder(){
   let rows=cart.map(x=>({order_id:orderId,menu_item_id:x.menuItemId||null,item_name:x.name,price:x.unitPrice,quantity:x.qty}));
   let r=await sb.from("order_items").insert(rows);
   if(r.error){await sb.from("orders").delete().eq("id",orderId);return alert(r.error.message)}
+  localStorage.setItem("unno_last_order_id",String(orderId));
+  localStorage.setItem("unno_last_order_status","Mới");
+  startCustomerOrderWatch();
+  showCustomerStatus("Mới");
   cart=[];setCart();closeCart();document.getElementById("note").value="";
   if(orderMode!=="table"){
     document.getElementById("customerName").value="";
@@ -225,11 +256,77 @@ async function placeOrder(){
   }
   alert(orderMode==="delivery"?"Đã gửi đơn giao hàng! Quán sẽ liên hệ xác nhận.":orderMode==="pickup"?"Đã gửi đơn mang về! Quán sẽ liên hệ xác nhận.":"Đã gửi order thành công!");
 }
+
+let customerOrderChannel=null;
+function customerNotifyBeep(freq=720){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext;
+    if(!C)return;
+    const c=new C(),o=c.createOscillator(),g=c.createGain();
+    o.frequency.value=freq;o.type="sine";
+    g.gain.setValueAtTime(.001,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.16,c.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.35);
+    o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.38);
+  }catch(e){}
+}
+function showCustomerStatus(status){
+  const box=document.getElementById("customerOrderStatus");
+  const title=document.getElementById("customerStatusTitle");
+  const sub=document.getElementById("customerStatusSub");
+  const btn=document.getElementById("notifyPermission");
+  if(!box||!title||!sub)return;
+  box.classList.remove("doing","done");
+  box.classList.add("show");
+  if(status==="Đang làm"){
+    box.classList.add("doing");
+    title.textContent="👨‍🍳 Quán đang làm đơn của bạn";
+    sub.textContent="UnNo Tea đã nhận đơn và đang chuẩn bị món.";
+  }else if(status==="Hoàn thành"){
+    box.classList.add("done");
+    title.textContent="✅ Đơn của bạn đã hoàn thành";
+    sub.textContent="Món đã sẵn sàng. Cảm ơn bạn đã đặt tại UnNo Tea!";
+  }else{
+    title.textContent="🧾 Đã gửi đơn thành công";
+    sub.textContent="Quán đã nhận được đơn. Trạng thái mới sẽ hiện tại đây.";
+  }
+  if("Notification" in window && Notification.permission==="default") btn.style.display="inline-block";
+  else btn.style.display="none";
+}
+async function enableCustomerNotifications(){
+  if(!("Notification" in window))return alert("Trình duyệt này không hỗ trợ thông báo.");
+  const p=await Notification.requestPermission();
+  document.getElementById("notifyPermission").style.display="none";
+  if(p==="granted")new Notification("UnNo Tea",{body:"Đã bật thông báo trạng thái đơn hàng."});
+}
+function notifyCustomerStatus(status){
+  showCustomerStatus(status);
+  customerNotifyBeep(status==="Hoàn thành"?980:760);
+  if("Notification" in window && Notification.permission==="granted"){
+    const body=status==="Đang làm"?"Quán đang chuẩn bị món của bạn.":status==="Hoàn thành"?"Đơn của bạn đã hoàn thành.":"Đơn hàng đã được cập nhật.";
+    try{new Notification("UnNo Tea • "+status,{body})}catch(e){}
+  }
+}
+function startCustomerOrderWatch(){
+  if(!sb)return;
+  const id=localStorage.getItem("unno_last_order_id");
+  if(!id)return;
+  if(customerOrderChannel){try{sb.removeChannel(customerOrderChannel)}catch(e){}}
+  customerOrderChannel=sb.channel("customer-order-"+id)
+    .on("postgres_changes",{event:"UPDATE",schema:"public",table:"orders",filter:"id=eq."+id},payload=>{
+      const s=payload.new?.status;
+      if(!s)return;
+      const prev=localStorage.getItem("unno_last_order_status");
+      localStorage.setItem("unno_last_order_status",s);
+      if(s!==prev)notifyCustomerStatus(s);
+    }).subscribe();
+}
+
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function showErr(x){console.warn(x)}
 
 async function login(){if(!sb)return;let e=document.getElementById("email").value,p=document.getElementById("password").value;let {error}=await sb.auth.signInWithPassword({email:e,password:p});document.getElementById("loginMsg").innerHTML=error?`<div class="notice error">${esc(error.message)}</div>`:"";if(!error)adminUI()}
-async function logout(){await sb.auth.signOut();location.href=location.pathname}
+async function logout(){await sb.auth.signOut();location.href="/"}
 async function adminUI(){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";let {data:{session}}=await sb.auth.getSession();if(session){document.getElementById("loginBox").style.display="none";document.getElementById("dash").style.display="block";showAdmin(adminView)}}
 async function showAdmin(v){adminView=v;document.querySelectorAll(".tab[data-v]").forEach(b=>b.classList.toggle("active",b.dataset.v===v));if(v==="orders"||v==="kitchen")await renderOrders(v);if(v==="menu")renderManage();if(v==="qr")renderQR()}
 let knownOrderIds=null,newOrderUnread=0,audioCtx=null;
@@ -328,7 +425,7 @@ async function toggleItem(id,on){await sb.from("menu_items").update({is_availabl
 async function delItem(id){if(!confirm("Xóa món?"))return;await sb.from("menu_items").delete().eq("id",id);loadManage();loadMenu()}
 function renderQR(){
   let base="https://unno-tea-order.vercel.app/";
-  let online=base+"?order=online";
+  let online="https://unno-tea-order.vercel.app/online";
   document.getElementById("adminView").innerHTML=`
   <div class="panel">
     <h2>Link đặt hàng online</h2>
@@ -347,7 +444,7 @@ document.getElementById("optionModal").addEventListener("click",e=>{if(e.target=
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeCart()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();closeCart()}});
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
-if(params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
+if(isAdminPath || params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
 if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>{if(document.getElementById("admin").style.display==="block"&&document.getElementById("dash").style.display!=="none")showAdmin(adminView)}).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
 
 // Dự phòng nếu Realtime bị ngắt: Admin/Bếp tự kiểm tra đơn mới mỗi 3 giây.
@@ -359,6 +456,13 @@ setInterval(()=>{
 },3000);
 
 setCart();
-document.addEventListener("DOMContentLoaded",()=>updateOrderModeUI());
+document.addEventListener("DOMContentLoaded",()=>{
+  updateOrderModeUI();
+  if(!(isAdminPath || params.get("admin")==="1")){
+    const s=localStorage.getItem("unno_last_order_status");
+    if(localStorage.getItem("unno_last_order_id"))showCustomerStatus(s||"Mới");
+    startCustomerOrderWatch();
+  }
+});
 </script>
 </body></html>
