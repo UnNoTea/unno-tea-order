@@ -27,6 +27,17 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 .shareline{display:flex;gap:8px;align-items:center;margin-top:8px}.shareline input{min-width:0}.shareline button{white-space:nowrap;border:0;border-radius:10px;padding:10px 12px;font-weight:800}
 @media(max-width:520px){.delivery-grid{grid-template-columns:1fr}}
 
+
+/* UnNo Tea online order */
+.online-title{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.online-title .online-icon{width:42px;height:42px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-size:21px}
+.online-help{margin:0 0 13px;color:var(--muted);font-size:13px}
+.order-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px!important;margin:12px 0 14px!important}
+.modebtn{border-radius:15px!important;padding:13px 10px!important;font-weight:900!important}
+.delivery-grid{margin-top:8px!important}
+.delivery-grid input{padding:13px!important}
+#remoteOrderBox{box-shadow:0 8px 28px #0000000d}
+@media(max-width:420px){.order-mode{grid-template-columns:1fr 1fr}.modebtn{font-size:13px;padding:12px 7px!important}}
 </style>
 
 <style id="uno-motion-v3">
@@ -60,17 +71,18 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 <main id="customer">
 <section class="hero"><img src="logo.jpg"><div><h1>Menu hôm nay</h1><p>Quét QR, chọn món và gửi order trực tiếp cho quán.</p></div></section>
 <section id="remoteOrderBox" class="delivery-box" style="display:none">
-  <h3>Đặt món online</h3>
-  <div class="small">Chọn cách nhận món, sau đó nhập thông tin để quán xác nhận đơn.</div>
+  <div class="online-title"><div class="online-icon">🛍</div><div><h3>Đặt món online</h3><div class="small">UnNo Tea • Đặt nhanh, không cần đăng nhập</div></div></div>
+  <p class="online-help">Bạn muốn quán giao tận nơi hay tự đến lấy?</p>
   <div class="order-mode">
     <button id="deliveryBtn" class="modebtn" type="button" onclick="setOrderMode('delivery')">🚚 Giao tận nơi</button>
     <button id="pickupBtn" class="modebtn" type="button" onclick="setOrderMode('pickup')">🥡 Tự đến lấy</button>
   </div>
   <div class="delivery-grid">
-    <input id="customerName" placeholder="Tên khách hàng">
-    <input id="customerPhone" inputmode="tel" placeholder="Số điện thoại">
-    <input id="customerAddress" class="wide" placeholder="Địa chỉ nhận hàng">
+    <input id="customerName" autocomplete="name" placeholder="Tên khách hàng *">
+    <input id="customerPhone" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại *">
+    <input id="customerAddress" class="wide" autocomplete="street-address" placeholder="Địa chỉ giao hàng *">
   </div>
+  <div id="onlineModeHint" class="small" style="margin-top:9px">Chọn hình thức nhận món để tiếp tục.</div>
 </section>
 
 <div id="cats" class="cats"></div><section id="menu" class="grid"></section>
@@ -84,7 +96,7 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 </div>
 <div id="dash" style="display:none">
 <div class="row"><h1>Quản lý quán</h1><button class="tab" onclick="logout()">Đăng xuất</button></div>
-<div class="adminbar"><button class="tab active" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
+<div class="adminbar"><button class="tab active" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button></div>
 <div id="adminView"></div>
 </div>
 </main>
@@ -108,7 +120,9 @@ function updateOrderModeUI(){
   const box=document.getElementById("remoteOrderBox");
   if(box)box.style.display=remote?"block":"none";
   const addr=document.getElementById("customerAddress");
-  if(addr)addr.style.display=orderMode==="delivery"?"block":"none";
+  if(addr){addr.style.display=orderMode==="delivery"?"block":"none";addr.required=orderMode==="delivery";}
+  const hint=document.getElementById("onlineModeHint");
+  if(hint)hint.textContent=orderMode==="delivery"?"Quán sẽ giao đến địa chỉ bạn nhập.":orderMode==="pickup"?"Quán sẽ chuẩn bị sẵn để bạn đến lấy.":"Chọn hình thức nhận món để tiếp tục.";
   const db=document.getElementById("deliveryBtn"), pb=document.getElementById("pickupBtn");
   if(db)db.classList.toggle("active",orderMode==="delivery");
   if(pb)pb.classList.toggle("active",orderMode==="pickup");
@@ -202,7 +216,6 @@ async function login(){if(!sb)return;let e=document.getElementById("email").valu
 async function logout(){await sb.auth.signOut();location.href=location.pathname}
 async function adminUI(){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";let {data:{session}}=await sb.auth.getSession();if(session){document.getElementById("loginBox").style.display="none";document.getElementById("dash").style.display="block";showAdmin(adminView)}}
 async function showAdmin(v){adminView=v;document.querySelectorAll(".tab[data-v]").forEach(b=>b.classList.toggle("active",b.dataset.v===v));if(v==="orders"||v==="kitchen")await renderOrders(v);if(v==="menu")renderManage();if(v==="qr")renderQR()}
-async function refreshAdmin(){if(adminView==="orders"||adminView==="kitchen")await renderOrders(adminView)}
 async function renderOrders(view){let q=sb.from("orders").select("*,order_items(*)").order("created_at",{ascending:false});if(view==="kitchen")q=q.neq("status","Hoàn thành");let {data,error}=await q;if(error)return adminView.innerHTML=`<div class="notice error">${esc(error.message)}</div>`;document.getElementById("adminView").innerHTML=`<div class="orders">${(data||[]).map(orderCard).join("")||'<div class="empty">Chưa có đơn.</div>'}</div>`}
 function orderCard(o){
   let total=(o.order_items||[]).reduce((a,i)=>a+i.price*i.quantity,0);
@@ -219,7 +232,7 @@ async function addMenu(){let name=mn.value.trim(),price=+mp.value,category=mc.va
 async function toggleItem(id,on){await sb.from("menu_items").update({is_available:on}).eq("id",id);loadManage();loadMenu()}
 async function delItem(id){if(!confirm("Xóa món?"))return;await sb.from("menu_items").delete().eq("id",id);loadManage();loadMenu()}
 function renderQR(){
-  let base=location.origin+location.pathname;
+  let base="https://unno-tea-order.vercel.app/";
   let online=base+"?order=online";
   document.getElementById("adminView").innerHTML=`
   <div class="panel">
@@ -241,20 +254,6 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();clos
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
 if(params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
 if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>{if(document.getElementById("admin").style.display==="block"&&document.getElementById("dash").style.display!=="none")showAdmin(adminView)}).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
-
-// Fallback cho trường hợp Supabase Realtime không đẩy sự kiện tới trình duyệt.
-// Khi Admin/Bếp đang mở, tự làm mới danh sách đơn mỗi 3 giây.
-setInterval(()=>{
-  const adminEl=document.getElementById("admin");
-  const dashEl=document.getElementById("dash");
-  if(adminEl && dashEl &&
-     adminEl.style.display==="block" &&
-     dashEl.style.display!=="none" &&
-     (adminView==="orders" || adminView==="kitchen")){
-    renderOrders(adminView);
-  }
-},3000);
-
 setCart();
 document.addEventListener("DOMContentLoaded",()=>updateOrderModeUI());
 </script>
