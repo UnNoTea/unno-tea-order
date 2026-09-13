@@ -468,6 +468,43 @@ body.admin-mode .qrgrid{
   body.admin-mode .qrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
+<style id="unno-v44-stats">
+/* ===== UnNo Tea V4.4: Thống kê doanh thu ===== */
+.stats-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.stats-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stats-controls input{width:auto;min-width:160px;background:#fff}
+.stats-switch{display:flex;gap:5px;padding:4px;background:#f1efe9;border-radius:12px}
+.stats-switch button{border:0;background:transparent;padding:8px 12px;border-radius:9px;font-weight:800}
+.stats-switch button.active{background:#111;color:#fff}
+.stats-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px}
+.kpi .kpi-label{font-size:12px;color:var(--muted);margin-bottom:7px}
+.kpi .kpi-value{font-size:24px;font-weight:950;letter-spacing:-.5px}
+.kpi .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.stats-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+.stats-table-wrap{overflow:auto}
+.stats-table{width:100%;border-collapse:collapse;font-size:13px}
+.stats-table th,.stats-table td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.stats-table th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:#faf9f6;position:sticky;top:0}
+.stats-table td.items-cell{white-space:normal;min-width:220px}
+.stats-right .rank{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.stats-right .rank:last-child{border-bottom:0}
+.daybar{display:grid;grid-template-columns:90px 1fr auto;gap:9px;align-items:center;padding:8px 0}
+.daybar-track{height:9px;background:#eeeae3;border-radius:999px;overflow:hidden}
+.daybar-fill{height:100%;background:#111;border-radius:999px;min-width:2px}
+.stats-empty{padding:32px;text-align:center;color:var(--muted)}
+.export-btn{background:#111;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:900}
+@media(max-width:980px){
+  .stats-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .stats-kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi{padding:12px}.kpi .kpi-value{font-size:19px}
+  .stats-controls{width:100%}.stats-controls input{flex:1;min-width:135px}
+  .stats-switch{width:100%}.stats-switch button{flex:1}
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -504,7 +541,7 @@ body.admin-mode .qrgrid{
 <div id="dash" style="display:none">
 <div id="newOrderAlert"><span>🔔 Có đơn mới!</span><button onclick="dismissNewOrderAlert()">Đã xem</button></div>
 <div class="row"><h1>Quản lý quán <span id="newOrderCount" class="new-dot" style="display:none">0</span></h1><button class="tab" onclick="logout()">Đăng xuất</button></div>
-<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
+<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" data-v="stats">📊 Thống kê</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
 <div id="adminView"></div>
 </div>
 </main>
@@ -751,6 +788,7 @@ async function showAdmin(v){
   if(v==="counter")renderCounter();
   if(v==="menu")renderManage();
   if(v==="qr")renderQR();
+  if(v==="stats")renderStats();
 }
 
 function renderCounter(){
@@ -852,7 +890,7 @@ function dismissNewOrderAlert(){
   if(c)c.style.display="none";
   document.title="UnNo Tea • Order";
 }
-async function refreshAdmin(){if(adminView==="orders"||adminView==="kitchen")await renderOrders(adminView)}
+async function refreshAdmin(){if(adminView==="orders"||adminView==="kitchen")await renderOrders(adminView);if(adminView==="stats")await loadStats()}
 async function renderOrders(view){
   let q=sb.from("orders").select("*,order_items(*)").order("created_at",{ascending:false});
   if(view==="kitchen")q=q.neq("status","Hoàn thành");
@@ -918,6 +956,186 @@ async function loadManage(){let {data,error}=await sb.from("menu_items").select(
 async function addMenu(){let name=mn.value.trim(),price=+mp.value,category=mc.value.trim();if(!name||!price||!category)return alert("Cần tên, giá và danh mục.");let {error}=await sb.from("menu_items").insert({name,price,category,image_url:mi.value.trim()||"logo.jpg",description:md.value.trim(),sort_order:+ms.value||0,is_available:true});if(error)alert(error.message);else renderManage()}
 async function toggleItem(id,on){await sb.from("menu_items").update({is_available:on}).eq("id",id);loadManage();loadMenu()}
 async function delItem(id){if(!confirm("Xóa món?"))return;await sb.from("menu_items").delete().eq("id",id);loadManage();loadMenu()}
+
+let statsMode="day",statsRows=[],statsItems=[],statsRangeLabel="";
+function localISODate(d=new Date()){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function localISOMonth(d=new Date()){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+function renderStats(){
+  counterOrdering=false;
+  document.getElementById("adminView").innerHTML=`
+    <div class="panel">
+      <div class="stats-head">
+        <div>
+          <h2 style="margin:0">📊 Thống kê doanh thu</h2>
+          <div class="small">Doanh thu được tính từ các đơn có trạng thái <b>Hoàn thành</b>.</div>
+        </div>
+        <div class="stats-controls">
+          <div class="stats-switch">
+            <button id="statsDayBtn" class="${statsMode==="day"?"active":""}" onclick="setStatsMode('day')">Theo ngày</button>
+            <button id="statsMonthBtn" class="${statsMode==="month"?"active":""}" onclick="setStatsMode('month')">Theo tháng</button>
+          </div>
+          <input id="statsDateInput" type="${statsMode==="day"?"date":"month"}" value="${statsMode==="day"?localISODate():localISOMonth()}" onchange="loadStats()">
+          <button class="export-btn" onclick="downloadStatsCSV()">⬇ Tải file CSV</button>
+        </div>
+      </div>
+    </div>
+    <div id="statsContent"><div class="panel stats-empty" style="margin-top:12px">Đang tải thống kê...</div></div>`;
+  loadStats();
+}
+function setStatsMode(mode){
+  statsMode=mode;
+  renderStats();
+}
+function statsPeriod(){
+  const input=document.getElementById("statsDateInput");
+  const val=input?.value||(statsMode==="day"?localISODate():localISOMonth());
+  let start,end,label;
+  if(statsMode==="day"){
+    const [y,m,d]=val.split("-").map(Number);
+    start=new Date(y,m-1,d,0,0,0,0);
+    end=new Date(y,m-1,d+1,0,0,0,0);
+    label=`${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`;
+  }else{
+    const [y,m]=val.split("-").map(Number);
+    start=new Date(y,m-1,1,0,0,0,0);
+    end=new Date(y,m,1,0,0,0,0);
+    label=`Tháng ${String(m).padStart(2,"0")}/${y}`;
+  }
+  return {start,end,label,val};
+}
+function orderTypeLabel(v){
+  return v==="GIAO HÀNG"?"Giao hàng":v==="MANG VỀ"?"Mang về":v==="TẠI QUẦY"?"Tại quầy":"Bàn "+v;
+}
+async function loadStats(){
+  const content=document.getElementById("statsContent");if(!content||!sb)return;
+  content.innerHTML='<div class="panel stats-empty" style="margin-top:12px">Đang tải thống kê...</div>';
+  const {start,end,label}=statsPeriod();statsRangeLabel=label;
+  let {data:orders,error}=await sb.from("orders").select("id,table_number,status,note,created_at").gte("created_at",start.toISOString()).lt("created_at",end.toISOString()).order("created_at",{ascending:false});
+  if(error){content.innerHTML=`<div class="notice error" style="margin-top:12px">${esc(error.message)}</div>`;return}
+  orders=orders||[];
+  const ids=orders.map(o=>o.id);
+  let items=[];
+  if(ids.length){
+    const res=await sb.from("order_items").select("order_id,item_name,price,quantity").in("order_id",ids);
+    if(res.error){content.innerHTML=`<div class="notice error" style="margin-top:12px">${esc(res.error.message)}</div>`;return}
+    items=res.data||[];
+  }
+  const itemMap=new Map();
+  for(const i of items){
+    if(!itemMap.has(String(i.order_id)))itemMap.set(String(i.order_id),[]);
+    itemMap.get(String(i.order_id)).push(i);
+  }
+  const rows=orders.map(o=>{
+    const its=itemMap.get(String(o.id))||[];
+    const value=its.reduce((a,i)=>a+Number(i.price||0)*Number(i.quantity||0),0);
+    return {...o,items:its,value};
+  });
+  statsRows=rows;statsItems=items;
+  const completed=rows.filter(o=>o.status==="Hoàn thành");
+  const revenue=completed.reduce((a,o)=>a+o.value,0);
+  const totalOrders=rows.length;
+  const completedCount=completed.length;
+  const avg=completedCount?Math.round(revenue/completedCount):0;
+  const itemQty=completed.reduce((a,o)=>a+o.items.reduce((s,i)=>s+Number(i.quantity||0),0),0);
+
+  const productMap={};
+  completed.forEach(o=>o.items.forEach(i=>{
+    const k=i.item_name||"Món";
+    productMap[k]=productMap[k]||{qty:0,revenue:0};
+    productMap[k].qty+=Number(i.quantity||0);
+    productMap[k].revenue+=Number(i.price||0)*Number(i.quantity||0);
+  }));
+  const topProducts=Object.entries(productMap).sort((a,b)=>b[1].qty-a[1].qty).slice(0,10);
+
+  let daySummary="";
+  if(statsMode==="month"){
+    const byDay={};
+    completed.forEach(o=>{
+      const d=localISODate(new Date(o.created_at));
+      byDay[d]=(byDay[d]||0)+o.value;
+    });
+    const entries=Object.entries(byDay).sort((a,b)=>a[0].localeCompare(b[0]));
+    const max=Math.max(1,...entries.map(x=>x[1]));
+    daySummary=`<div class="panel"><h3 style="margin-top:0">Doanh thu từng ngày</h3>${entries.length?entries.map(([d,v])=>`<div class="daybar"><span>${d.split("-").reverse().join("/")}</span><div class="daybar-track"><div class="daybar-fill" style="width:${Math.max(2,Math.round(v/max*100))}%"></div></div><b>${money(v)}</b></div>`).join(""):'<div class="stats-empty">Chưa có doanh thu hoàn thành trong tháng này.</div>'}</div>`;
+  }
+
+  content.innerHTML=`
+    <div class="stats-kpis">
+      <div class="kpi"><div class="kpi-label">DOANH THU HOÀN THÀNH</div><div class="kpi-value">${money(revenue)}</div><div class="kpi-sub">${esc(label)}</div></div>
+      <div class="kpi"><div class="kpi-label">ĐƠN HOÀN THÀNH</div><div class="kpi-value">${completedCount}</div><div class="kpi-sub">Tổng ${totalOrders} đơn phát sinh</div></div>
+      <div class="kpi"><div class="kpi-label">TRUNG BÌNH / ĐƠN</div><div class="kpi-value">${money(avg)}</div><div class="kpi-sub">Chỉ tính đơn hoàn thành</div></div>
+      <div class="kpi"><div class="kpi-label">SỐ MÓN ĐÃ BÁN</div><div class="kpi-value">${itemQty}</div><div class="kpi-sub">Trong các đơn hoàn thành</div></div>
+    </div>
+    <div class="stats-grid">
+      <div>
+        ${daySummary}
+        <div class="panel" ${daySummary?'style="margin-top:12px"':''}>
+          <div class="row"><h3 style="margin:0">Chi tiết đơn hàng</h3><span class="small">${esc(label)}</span></div>
+          <div class="stats-table-wrap">
+            <table class="stats-table">
+              <thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Loại đơn</th><th>Trạng thái</th><th>Món</th><th>Giá trị</th></tr></thead>
+              <tbody>${rows.map(o=>`<tr>
+                <td>#${o.id}</td>
+                <td>${new Date(o.created_at).toLocaleString("vi-VN")}</td>
+                <td>${esc(orderTypeLabel(o.table_number))}</td>
+                <td>${esc(o.status)}</td>
+                <td class="items-cell">${o.items.map(i=>`${esc(i.item_name)} × ${i.quantity}`).join("<br>")||"—"}</td>
+                <td><b>${money(o.value)}</b></td>
+              </tr>`).join("")||'<tr><td colspan="6" class="stats-empty">Chưa có đơn trong khoảng thời gian này.</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="stats-right">
+        <div class="panel">
+          <h3 style="margin-top:0">🔥 Món bán chạy</h3>
+          ${topProducts.length?topProducts.map(([name,x],idx)=>`<div class="rank"><span>${idx+1}. ${esc(name)} <span class="small">× ${x.qty}</span></span><b>${money(x.revenue)}</b></div>`).join(""):'<div class="stats-empty">Chưa có dữ liệu bán hàng.</div>'}
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <h3 style="margin-top:0">Cách tính</h3>
+          <div class="small" style="line-height:1.7">• Doanh thu = tổng giá trị các đơn <b>Hoàn thành</b>.<br>• Đơn Mới/Đang làm vẫn hiển thị trong bảng nhưng chưa cộng doanh thu.<br>• File CSV có thể mở trực tiếp bằng Excel.</div>
+        </div>
+      </div>
+    </div>`;
+}
+function csvCell(v){
+  const s=String(v??"").replace(/"/g,'""');
+  return `"${s}"`;
+}
+function downloadStatsCSV(){
+  if(!statsRows.length)return alert("Khoảng thời gian này chưa có đơn để tải.");
+  const header=["Mã đơn","Thời gian","Loại đơn","Trạng thái","Món đã gọi","Giá trị đơn","Ghi chú"];
+  const lines=[header.map(csvCell).join(",")];
+  statsRows.forEach(o=>{
+    const itemText=(o.items||[]).map(i=>`${i.item_name} x${i.quantity}`).join("; ");
+    lines.push([
+      o.id,
+      new Date(o.created_at).toLocaleString("vi-VN"),
+      orderTypeLabel(o.table_number),
+      o.status,
+      itemText,
+      o.value,
+      o.note||""
+    ].map(csvCell).join(","));
+  });
+  const completed=statsRows.filter(o=>o.status==="Hoàn thành");
+  const revenue=completed.reduce((a,o)=>a+o.value,0);
+  lines.push("");
+  lines.push([csvCell("TỔNG DOANH THU HOÀN THÀNH"),csvCell(revenue)].join(","));
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  const safe=statsRangeLabel.replace(/[\/\s]+/g,"-").replace(/[^\w\-À-ỹ]/g,"");
+  a.download=`UnNo-Tea-Doanh-Thu-${safe||"thong-ke"}.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
 function renderQR(){
   let base="https://unno-tea-order.vercel.app/";
   let online="https://unno-tea-order.vercel.app/online";
