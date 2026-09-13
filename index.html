@@ -74,6 +74,48 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 </section>
 
 <div id="cats" class="cats"></div><section id="menu" class="grid"></section>
+<script id="online-bootstrap">
+(function(){
+  const p = new URLSearchParams(window.location.search);
+  let mode = (p.get("order") || "").toLowerCase();
+  if (!["online","delivery","pickup"].includes(mode)) return;
+
+  function apply(m){
+    const box = document.getElementById("remoteOrderBox");
+    const badge = document.getElementById("table");
+    const sub = document.getElementById("headSub");
+    const addr = document.getElementById("customerAddress");
+    const deliveryBtn = document.getElementById("deliveryBtn");
+    const pickupBtn = document.getElementById("pickupBtn");
+
+    if (box) box.style.display = "block";
+    if (badge) badge.textContent =
+      m === "delivery" ? "🚚 Giao hàng" :
+      m === "pickup" ? "🥡 Mang về" : "Đặt online";
+    if (sub) sub.textContent = "Đặt món online • Est. 2021";
+    if (addr) addr.style.display = m === "delivery" ? "block" : "none";
+    if (deliveryBtn) deliveryBtn.classList.toggle("active", m === "delivery");
+    if (pickupBtn) pickupBtn.classList.toggle("active", m === "pickup");
+  }
+
+  window.setOrderMode = function(m){
+    if (!["delivery","pickup"].includes(m)) return;
+    mode = m;
+    const u = new URL(window.location.href);
+    u.searchParams.delete("table");
+    u.searchParams.set("order", m);
+    history.replaceState(null, "", u);
+    apply(m);
+
+    if (typeof orderMode !== "undefined") {
+      try { orderMode = m; } catch(e) {}
+    }
+  };
+
+  apply(mode);
+})();
+</script>
+
 </main>
 
 <main id="admin">
