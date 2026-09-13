@@ -74,48 +74,6 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 </section>
 
 <div id="cats" class="cats"></div><section id="menu" class="grid"></section>
-<script id="online-bootstrap">
-(function(){
-  const p = new URLSearchParams(window.location.search);
-  let mode = (p.get("order") || "").toLowerCase();
-  if (!["online","delivery","pickup"].includes(mode)) return;
-
-  function apply(m){
-    const box = document.getElementById("remoteOrderBox");
-    const badge = document.getElementById("table");
-    const sub = document.getElementById("headSub");
-    const addr = document.getElementById("customerAddress");
-    const deliveryBtn = document.getElementById("deliveryBtn");
-    const pickupBtn = document.getElementById("pickupBtn");
-
-    if (box) box.style.display = "block";
-    if (badge) badge.textContent =
-      m === "delivery" ? "🚚 Giao hàng" :
-      m === "pickup" ? "🥡 Mang về" : "Đặt online";
-    if (sub) sub.textContent = "Đặt món online • Est. 2021";
-    if (addr) addr.style.display = m === "delivery" ? "block" : "none";
-    if (deliveryBtn) deliveryBtn.classList.toggle("active", m === "delivery");
-    if (pickupBtn) pickupBtn.classList.toggle("active", m === "pickup");
-  }
-
-  window.setOrderMode = function(m){
-    if (!["delivery","pickup"].includes(m)) return;
-    mode = m;
-    const u = new URL(window.location.href);
-    u.searchParams.delete("table");
-    u.searchParams.set("order", m);
-    history.replaceState(null, "", u);
-    apply(m);
-
-    if (typeof orderMode !== "undefined") {
-      try { orderMode = m; } catch(e) {}
-    }
-  };
-
-  apply(mode);
-})();
-</script>
-
 </main>
 
 <main id="admin">
@@ -126,7 +84,7 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 </div>
 <div id="dash" style="display:none">
 <div class="row"><h1>Quản lý quán</h1><button class="tab" onclick="logout()">Đăng xuất</button></div>
-<div class="adminbar"><button class="tab active" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button></div>
+<div class="adminbar"><button class="tab active" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
 <div id="adminView"></div>
 </div>
 </main>
@@ -244,6 +202,7 @@ async function login(){if(!sb)return;let e=document.getElementById("email").valu
 async function logout(){await sb.auth.signOut();location.href=location.pathname}
 async function adminUI(){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";let {data:{session}}=await sb.auth.getSession();if(session){document.getElementById("loginBox").style.display="none";document.getElementById("dash").style.display="block";showAdmin(adminView)}}
 async function showAdmin(v){adminView=v;document.querySelectorAll(".tab[data-v]").forEach(b=>b.classList.toggle("active",b.dataset.v===v));if(v==="orders"||v==="kitchen")await renderOrders(v);if(v==="menu")renderManage();if(v==="qr")renderQR()}
+async function refreshAdmin(){if(adminView==="orders"||adminView==="kitchen")await renderOrders(adminView)}
 async function renderOrders(view){let q=sb.from("orders").select("*,order_items(*)").order("created_at",{ascending:false});if(view==="kitchen")q=q.neq("status","Hoàn thành");let {data,error}=await q;if(error)return adminView.innerHTML=`<div class="notice error">${esc(error.message)}</div>`;document.getElementById("adminView").innerHTML=`<div class="orders">${(data||[]).map(orderCard).join("")||'<div class="empty">Chưa có đơn.</div>'}</div>`}
 function orderCard(o){
   let total=(o.order_items||[]).reduce((a,i)=>a+i.price*i.quantity,0);
@@ -282,6 +241,20 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();clos
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
 if(params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
 if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>{if(document.getElementById("admin").style.display==="block"&&document.getElementById("dash").style.display!=="none")showAdmin(adminView)}).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
+
+// Fallback cho trường hợp Supabase Realtime không đẩy sự kiện tới trình duyệt.
+// Khi Admin/Bếp đang mở, tự làm mới danh sách đơn mỗi 3 giây.
+setInterval(()=>{
+  const adminEl=document.getElementById("admin");
+  const dashEl=document.getElementById("dash");
+  if(adminEl && dashEl &&
+     adminEl.style.display==="block" &&
+     dashEl.style.display!=="none" &&
+     (adminView==="orders" || adminView==="kitchen")){
+    renderOrders(adminView);
+  }
+},3000);
+
 setCart();
 document.addEventListener("DOMContentLoaded",()=>updateOrderModeUI());
 </script>
