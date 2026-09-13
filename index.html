@@ -780,6 +780,397 @@ body.admin-mode .qrgrid{
   body:not(.admin-mode) .cart .cart-actions button{padding:7px 7px!important;font-size:10px!important}
 }
 </style>
+<style id="unno-v46-order-alert-tab">
+/* ===== UnNo Tea V4.6: báo đơn mới ngay trên danh mục Admin ===== */
+.orders-tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:21px;height:21px;padding:0 6px;margin-left:5px;
+  border-radius:999px;background:#d92d20;color:#fff;
+  font-size:11px;font-weight:950;line-height:1;
+}
+.tab.order-attention{
+  position:relative;
+  color:#fff!important;
+  background:#d92d20!important;
+  border-color:#d92d20!important;
+  box-shadow:0 0 0 0 rgba(217,45,32,.45);
+  animation:orderTabPulse 1s ease-in-out infinite;
+}
+.tab.order-attention::after{
+  content:"";
+  position:absolute;
+  width:9px;height:9px;border-radius:50%;
+  right:-3px;top:-3px;
+  background:#ff3b30;
+  box-shadow:0 0 0 4px #fff;
+}
+@keyframes orderTabPulse{
+  0%,100%{transform:translateY(0) scale(1);box-shadow:0 0 0 0 rgba(217,45,32,.42)}
+  50%{transform:translateY(-1px) scale(1.035);box-shadow:0 0 0 7px rgba(217,45,32,0)}
+}
+@media(max-width:900px){
+  .tab.order-attention{animation:orderTabPulseMobile .9s ease-in-out infinite}
+  @keyframes orderTabPulseMobile{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.04)}
+  }
+}
+</style>
+<style id="unno-v47-mobile-ordering">
+/* ===== UnNo Tea V4.7: mobile ordering UX cho QR + Online ===== */
+@media(max-width:760px){
+  /* Chỉ tác động giao diện khách, không đụng Admin/Desktop */
+  body:not(.admin-mode){
+    background:#f7f4ee;
+  }
+
+  body:not(.admin-mode) header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(255,255,255,.96);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid #ece7df;
+  }
+  body:not(.admin-mode) header .nav{
+    max-width:none;
+    padding:8px 10px;
+    min-height:58px;
+  }
+  body:not(.admin-mode) .logo{
+    width:42px;height:42px;
+  }
+  body:not(.admin-mode) .brandbox{
+    min-width:0;
+    flex:1;
+  }
+  body:not(.admin-mode) .brand{
+    font-size:15px;
+    line-height:1.1;
+  }
+  body:not(.admin-mode) #headSub{
+    font-size:9.5px;
+    margin-top:2px;
+  }
+  body:not(.admin-mode) #table{
+    font-size:10.5px;
+    font-weight:900;
+    padding:7px 9px;
+    border-radius:999px;
+    min-width:auto;
+    max-width:110px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  body:not(.admin-mode) main#customer{
+    padding:8px 8px 106px;
+  }
+
+  /* Hero rút gọn mạnh để vào menu nhanh */
+  body:not(.admin-mode) .hero{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:9px 10px;
+    margin:0 0 8px;
+    border-radius:13px;
+    min-height:0;
+  }
+  body:not(.admin-mode) .hero img{
+    width:40px;height:40px;
+    flex:0 0 40px;
+  }
+  body:not(.admin-mode) .hero h1{
+    font-size:16px;
+    line-height:1.15;
+    margin:0 0 2px;
+  }
+  body:not(.admin-mode) .hero p{
+    font-size:10.5px;
+    line-height:1.3;
+    margin:0;
+  }
+
+  /* Online order: form gọn, dễ bấm */
+  body:not(.admin-mode) #remoteOrderBox{
+    padding:10px!important;
+    margin:0 0 8px;
+    border-radius:13px;
+  }
+  body:not(.admin-mode) #remoteOrderBox h3{
+    font-size:15px;
+    margin-bottom:3px;
+  }
+  body:not(.admin-mode) #remoteOrderBox>.small{
+    font-size:10.5px;
+    line-height:1.3;
+  }
+  body:not(.admin-mode) .order-mode{
+    gap:6px!important;
+    margin:8px 0!important;
+  }
+  body:not(.admin-mode) .modebtn{
+    min-height:42px;
+    padding:8px 6px!important;
+    font-size:11.5px!important;
+    border-radius:10px!important;
+  }
+  body:not(.admin-mode) .delivery-grid{
+    grid-template-columns:1fr!important;
+    gap:6px!important;
+  }
+  body:not(.admin-mode) .delivery-grid input{
+    width:100%;
+    min-height:41px;
+    padding:9px 10px!important;
+    font-size:12.5px;
+    border-radius:10px;
+  }
+
+  /* Tìm kiếm bám màn hình */
+  body:not(.admin-mode) .customer-tools{
+    position:sticky;
+    top:58px;
+    z-index:35;
+    background:#f7f4ee;
+    padding:5px 0 5px;
+    margin:0;
+  }
+  body:not(.admin-mode) #menuSearch{
+    height:43px;
+    border-radius:12px;
+    font-size:12.5px;
+    box-shadow:0 3px 12px rgba(0,0,0,.04);
+  }
+
+  /* Danh mục 1 hàng, vuốt ngang */
+  body:not(.admin-mode) #cats{
+    position:sticky;
+    top:106px;
+    z-index:34;
+    display:flex;
+    flex-wrap:nowrap!important;
+    overflow-x:auto;
+    gap:6px;
+    margin:0 -8px 8px;
+    padding:4px 8px 7px;
+    background:#f7f4ee;
+    scrollbar-width:none;
+  }
+  body:not(.admin-mode) #cats::-webkit-scrollbar{display:none}
+  body:not(.admin-mode) #cats .cat{
+    flex:0 0 auto;
+    min-height:34px;
+    padding:7px 10px;
+    border-radius:999px;
+    font-size:10.5px;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  /* Menu: 2 món / hàng, ưu tiên tên + giá + nút thêm */
+  body:not(.admin-mode) #menu.grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
+  }
+  body:not(.admin-mode) #menu .card{
+    border-radius:12px;
+    box-shadow:0 3px 12px rgba(0,0,0,.035);
+    border:1px solid #ebe6de;
+    background:#fff;
+  }
+  body:not(.admin-mode) #menu .pic{
+    width:100%;
+    aspect-ratio:1.1!important;
+    object-fit:cover;
+  }
+  body:not(.admin-mode) #menu .body{
+    padding:7px 7px 8px!important;
+  }
+  body:not(.admin-mode) #menu .name{
+    font-size:11.5px!important;
+    line-height:1.22!important;
+    min-height:28px!important;
+    font-weight:850;
+    -webkit-line-clamp:2;
+  }
+  body:not(.admin-mode) #menu .desc,
+  body:not(.admin-mode) #menu .drink-note{
+    display:none!important;
+  }
+  body:not(.admin-mode) #menu .mt{
+    margin-top:5px!important;
+  }
+  body:not(.admin-mode) #menu .price{
+    font-size:11.5px!important;
+    font-weight:900;
+  }
+  body:not(.admin-mode) #menu .add{
+    width:31px!important;
+    height:31px!important;
+    min-width:31px!important;
+    padding:0!important;
+    border-radius:9px!important;
+    font-size:0!important;
+  }
+  body:not(.admin-mode) #menu .add::after{
+    content:"+";
+    font-size:18px;
+    line-height:1;
+  }
+
+  /* Thanh dưới cùng luôn dễ hiểu */
+  body:not(.admin-mode) .cart{
+    left:7px!important;
+    right:7px!important;
+    bottom:7px!important;
+    width:auto!important;
+    transform:none!important;
+    border-radius:15px;
+    padding:8px;
+    gap:7px;
+    min-height:54px;
+    background:#171717;
+    box-shadow:0 10px 26px rgba(0,0,0,.23);
+  }
+  body:not(.admin-mode) .cart .cart-main{
+    font-size:10.5px!important;
+    line-height:1.25;
+    min-width:72px;
+  }
+  body:not(.admin-mode) .cart .cart-actions{
+    gap:5px;
+    margin-left:auto;
+  }
+  body:not(.admin-mode) .cart .cart-actions button{
+    min-height:36px;
+    padding:7px 8px!important;
+    font-size:10px!important;
+    border-radius:9px;
+  }
+  body:not(.admin-mode) .cart .myorders-btn{
+    background:#f4efe6!important;
+  }
+
+  /* Modal chọn món / giỏ: kiểu bottom sheet */
+  body:not(.admin-mode) .modal{
+    align-items:flex-end!important;
+    padding:0!important;
+  }
+  body:not(.admin-mode) .modal .sheet{
+    width:100%!important;
+    max-width:none!important;
+    max-height:90vh!important;
+    border-radius:20px 20px 0 0!important;
+    padding:10px 11px 16px!important;
+    overflow:auto;
+  }
+  body:not(.admin-mode) .handle{
+    width:42px;height:4px;
+    margin:1px auto 8px;
+  }
+  body:not(.admin-mode) .sheethead{
+    position:sticky;
+    top:-10px;
+    background:#fff;
+    z-index:2;
+    padding:4px 0 7px;
+  }
+  body:not(.admin-mode) .sheethead h2{
+    font-size:17px;
+  }
+  body:not(.admin-mode) .close{
+    width:34px;height:34px;
+  }
+
+  /* Lựa chọn size/topping: nút lớn, ít rối */
+  body:not(.admin-mode) .options-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+  }
+  body:not(.admin-mode) .option-btn{
+    min-height:43px;
+    padding:8px!important;
+    border-radius:10px!important;
+    font-size:11.5px!important;
+  }
+  body:not(.admin-mode) #optionConfirm{
+    min-height:47px;
+    border-radius:11px;
+    font-size:13px;
+  }
+
+  /* Giỏ hàng */
+  body:not(.admin-mode) #cartItems .item{
+    grid-template-columns:minmax(0,1fr) auto;
+    padding:8px 0;
+    gap:6px;
+  }
+  body:not(.admin-mode) #cartItems .item>b{
+    grid-column:1/-1;
+    text-align:right;
+    font-size:11.5px;
+  }
+  body:not(.admin-mode) .qty{
+    gap:5px;
+  }
+  body:not(.admin-mode) .qty button{
+    width:29px;height:29px;
+    padding:0;
+  }
+  body:not(.admin-mode) #note{
+    min-height:62px;
+    font-size:12px;
+    border-radius:10px;
+  }
+  body:not(.admin-mode) #placeOrderBtn{
+    min-height:47px;
+    border-radius:11px;
+    font-size:13px;
+    position:sticky;
+    bottom:0;
+  }
+
+  /* Đơn của tôi: status rõ hơn */
+  body:not(.admin-mode) .myorder{
+    padding:10px;
+    border-radius:12px;
+  }
+  body:not(.admin-mode) .myorder-head{
+    gap:6px;
+  }
+  body:not(.admin-mode) .myorder-head b{
+    font-size:11.5px;
+  }
+  body:not(.admin-mode) .myorder .small{
+    font-size:9.5px;
+  }
+  body:not(.admin-mode) .progress{
+    margin:9px 0 3px;
+  }
+  body:not(.admin-mode) .progress-labels{
+    font-size:8.5px;
+  }
+  body:not(.admin-mode) .myorder-items{
+    font-size:10.5px;
+    line-height:1.4;
+    margin:7px 0;
+  }
+}
+
+@media(max-width:380px){
+  body:not(.admin-mode) main#customer{padding-left:6px;padding-right:6px}
+  body:not(.admin-mode) #menu.grid{gap:6px!important}
+  body:not(.admin-mode) #menu .body{padding:6px!important}
+  body:not(.admin-mode) #menu .name{font-size:11px!important}
+  body:not(.admin-mode) #menu .price{font-size:11px!important}
+  body:not(.admin-mode) .cart{left:5px!important;right:5px!important;padding:7px}
+  body:not(.admin-mode) .cart .cart-actions button{padding:6px 7px!important;font-size:9.5px!important}
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -802,7 +1193,7 @@ body.admin-mode .qrgrid{
 </section>
 
 <div class="customer-tools">
-  <div class="search-wrap"><span class="search-icon">🔎</span><input id="menuSearch" type="search" placeholder="Tìm món: trà sữa, xoài, nem, matcha..." oninput="applyCustomerFilters()"></div>
+  <div class="search-wrap"><span class="search-icon">🔎</span><input id="menuSearch" type="search" placeholder="Tìm món bạn muốn..." oninput="applyCustomerFilters()"></div>
 </div>
 <div id="cats" class="cats"></div><section id="menu" class="grid"></section>
 </main>
@@ -816,7 +1207,7 @@ body.admin-mode .qrgrid{
 <div id="dash" style="display:none">
 <div id="newOrderAlert"><span>🔔 Có đơn mới!</span><button onclick="dismissNewOrderAlert()">Đã xem</button></div>
 <div class="row"><h1>Quản lý quán <span id="newOrderCount" class="new-dot" style="display:none">0</span></h1><button class="tab" onclick="logout()">Đăng xuất</button></div>
-<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" data-v="stats">📊 Thống kê</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
+<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng <span id="ordersTabBadge" class="orders-tab-badge" style="display:none">0</span></button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" data-v="stats">📊 Thống kê</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
 <div id="adminView"></div>
 </div>
 </main>
@@ -824,7 +1215,7 @@ body.admin-mode .qrgrid{
 <div id="cartBar" class="cart">
   <div class="cart-main"><span>🛒 <b id="count">0</b> món • <b id="sum">0đ</b></span></div>
   <div class="cart-actions">
-    <button onclick="openCart()">Giỏ hàng</button>
+    <button onclick="openCart()">🛒 Giỏ hàng</button>
     <button id="myOrdersBtn" class="myorders-btn" onclick="openMyOrders()">📋 Đơn của tôi</button>
   </div>
 </div>
@@ -1052,6 +1443,7 @@ async function adminUI(){
     const slot=document.getElementById("adminNavSlot");
     if(bar&&slot&&!slot.contains(bar))slot.appendChild(bar);
     showAdmin(adminView);
+    checkNewOrdersInBackground();
   }
 }
 async function showAdmin(v){
@@ -1064,6 +1456,8 @@ async function showAdmin(v){
   if(v==="menu")renderManage();
   if(v==="qr")renderQR();
   if(v==="stats")renderStats();
+  if(v==="orders")dismissNewOrderAlert();
+  else syncOrderTabAttention();
 }
 
 function renderCounter(){
@@ -1150,11 +1544,21 @@ function adminBeep(){
     o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.34);
   }catch(e){}
 }
+function syncOrderTabAttention(){
+  const tab=document.querySelector('.tab[data-v="orders"]');
+  const badge=document.getElementById("ordersTabBadge");
+  if(tab)tab.classList.toggle("order-attention",newOrderUnread>0 && adminView!=="orders");
+  if(badge){
+    badge.style.display=newOrderUnread>0?"inline-flex":"none";
+    badge.textContent=newOrderUnread>99?"99+":newOrderUnread;
+  }
+}
 function showNewOrderAlert(count=1){
   newOrderUnread+=count;
   const a=document.getElementById("newOrderAlert"),c=document.getElementById("newOrderCount");
   if(a)a.classList.add("show");
   if(c){c.style.display="inline-flex";c.textContent=newOrderUnread}
+  syncOrderTabAttention();
   document.title="🔴 Có đơn mới • UnNo Tea";
   adminBeep();
 }
@@ -1163,8 +1567,41 @@ function dismissNewOrderAlert(){
   const a=document.getElementById("newOrderAlert"),c=document.getElementById("newOrderCount");
   if(a)a.classList.remove("show");
   if(c)c.style.display="none";
+  syncOrderTabAttention();
   document.title="UnNo Tea • Order";
 }
+
+async function checkNewOrdersInBackground(){
+  const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
+  if(!sb||!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
+  try{
+    const {data,error}=await sb.from("orders").select("id").order("created_at",{ascending:false}).limit(120);
+    if(error)return;
+    const ids=new Set((data||[]).map(o=>String(o.id)));
+    if(knownOrderIds){
+      const fresh=[...ids].filter(id=>!knownOrderIds.has(id));
+      if(fresh.length)showNewOrderAlert(fresh.length);
+    }
+    knownOrderIds=ids;
+  }catch(e){}
+}
+function handleRealtimeOrderChange(payload){
+  const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
+  if(!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
+  if(payload?.eventType==="INSERT" && payload.new?.id!=null){
+    const id=String(payload.new.id);
+    if(knownOrderIds && !knownOrderIds.has(id)){
+      knownOrderIds.add(id);
+      showNewOrderAlert(1);
+    }else if(!knownOrderIds){
+      knownOrderIds=new Set([id]);
+      showNewOrderAlert(1);
+    }
+  }
+  if(adminView==="orders"||adminView==="kitchen")renderOrders(adminView);
+  if(adminView==="stats")loadStats();
+}
+
 async function refreshAdmin(){if(adminView==="orders"||adminView==="kitchen")await renderOrders(adminView);if(adminView==="stats")await loadStats()}
 async function renderOrders(view){
   let q=sb.from("orders").select("*,order_items(*)").order("created_at",{ascending:false});
@@ -1434,19 +1871,17 @@ document.getElementById("ordersModal").addEventListener("click",e=>{if(e.target=
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();closeCart();closeMyOrders()}});
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
 if(isAdminPath || params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
-if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>{if(document.getElementById("admin").style.display==="block"&&document.getElementById("dash").style.display!=="none")showAdmin(adminView)}).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
+if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload)).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
 
 setInterval(()=>{
   const om=document.getElementById("ordersModal");
   if(om&&om.classList.contains("open")&&sb)loadMyOrders();
 },3500);
 
-// Dự phòng nếu Realtime bị ngắt: Admin/Bếp tự kiểm tra đơn mới mỗi 3 giây.
+// Dự phòng nếu Realtime bị ngắt: vẫn kiểm tra đơn mới dù đang ở Order tại quầy/Món & giá/QR/Thống kê.
 setInterval(()=>{
-  const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
-  if(adminEl&&dashEl&&adminEl.style.display==="block"&&dashEl.style.display!=="none"&&(adminView==="orders"||adminView==="kitchen")){
-    renderOrders(adminView);
-  }
+  checkNewOrdersInBackground();
+  if(adminView==="orders"||adminView==="kitchen")renderOrders(adminView);
 },3000);
 
 setCart();
