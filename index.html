@@ -60,7 +60,7 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 <main id="customer">
 <section class="hero"><img src="logo.jpg"><div><h1>Menu hôm nay</h1><p>Quét QR, chọn món và gửi order trực tiếp cho quán.</p></div></section>
 <section id="remoteOrderBox" class="delivery-box" style="display:none">
-  <h3>Đặt món từ xa</h3>
+  <h3>Đặt món online</h3>
   <div class="small">Chọn cách nhận món, sau đó nhập thông tin để quán xác nhận đơn.</div>
   <div class="order-mode">
     <button id="deliveryBtn" class="modebtn" type="button" onclick="setOrderMode('delivery')">🚚 Giao tận nơi</button>
@@ -105,12 +105,17 @@ let orderParam=(params.get("order")||"").toLowerCase();
 let orderMode=["delivery","pickup"].includes(orderParam)?orderParam:(orderParam==="online"?"online":"table");
 function updateOrderModeUI(){
   const remote=orderMode!=="table";
-  document.getElementById("remoteOrderBox").style.display=remote?"block":"none";
-  document.getElementById("customerAddress").style.display=orderMode==="delivery"?"block":"none";
-  document.getElementById("deliveryBtn").classList.toggle("active",orderMode==="delivery");
-  document.getElementById("pickupBtn").classList.toggle("active",orderMode==="pickup");
-  document.getElementById("table").textContent=orderMode==="delivery"?"🚚 Giao hàng":orderMode==="pickup"?"🥡 Mang về":orderMode==="online"?"Đặt online":"Bàn "+table;
-  document.getElementById("headSub").textContent=remote?"Đặt món online • Est. 2021":"Order tại bàn • Est. 2021";
+  const box=document.getElementById("remoteOrderBox");
+  if(box)box.style.display=remote?"block":"none";
+  const addr=document.getElementById("customerAddress");
+  if(addr)addr.style.display=orderMode==="delivery"?"block":"none";
+  const db=document.getElementById("deliveryBtn"), pb=document.getElementById("pickupBtn");
+  if(db)db.classList.toggle("active",orderMode==="delivery");
+  if(pb)pb.classList.toggle("active",orderMode==="pickup");
+  const badge=document.getElementById("table");
+  if(badge)badge.textContent=orderMode==="delivery"?"🚚 Giao hàng":orderMode==="pickup"?"🥡 Mang về":orderMode==="online"?"Đặt online":"Bàn "+table;
+  const sub=document.getElementById("headSub");
+  if(sub)sub.textContent=remote?"Đặt món online • Est. 2021":"Order tại bàn • Est. 2021";
 }
 function setOrderMode(mode){
   orderMode=mode;
@@ -236,5 +241,6 @@ document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.d
 if(params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
 if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>{if(document.getElementById("admin").style.display==="block"&&document.getElementById("dash").style.display!=="none")showAdmin(adminView)}).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
 setCart();
+document.addEventListener("DOMContentLoaded",()=>updateOrderModeUI());
 </script>
 </body></html>
