@@ -504,7 +504,7 @@ body.admin-mode .qrgrid{
 <div id="dash" style="display:none">
 <div id="newOrderAlert"><span>🔔 Có đơn mới!</span><button onclick="dismissNewOrderAlert()">Đã xem</button></div>
 <div class="row"><h1>Quản lý quán <span id="newOrderCount" class="new-dot" style="display:none">0</span></h1><button class="tab" onclick="logout()">Đăng xuất</button></div>
-<div class="adminbar"><button class="tab active" data-v="orders">Đơn hàng</button><button class="tab" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
+<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
 <div id="adminView"></div>
 </div>
 </main>
@@ -561,7 +561,7 @@ function setOrderMode(mode){
 if(!isAdminPath&&!params.get("admin"))document.body.classList.remove("admin-mode","counter-view");
 }
 updateOrderModeUI();
-let menu=[],rawCart=JSON.parse(sessionStorage.getItem("uno_cart")||"[]"),cart=[],adminView="orders",channel=null;
+let menu=[],rawCart=JSON.parse(sessionStorage.getItem("uno_cart")||"[]"),cart=[],adminView="counter",channel=null;
 let currentCategory="Tất cả",counterCategory="Tất cả",counterOrdering=false;
 const trackedKey="unno_tracked_orders_v1";
 const money=n=>new Intl.NumberFormat("vi-VN").format(n)+"đ";
@@ -735,6 +735,7 @@ async function adminUI(){
   if(session){
     document.getElementById("loginBox").style.display="none";
     document.getElementById("dash").style.display="block";
+    if(!adminView)adminView="counter";
     const bar=document.querySelector("#dash .adminbar");
     const slot=document.getElementById("adminNavSlot");
     if(bar&&slot&&!slot.contains(bar))slot.appendChild(bar);
