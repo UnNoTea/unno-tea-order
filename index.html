@@ -38,6 +38,147 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 .delivery-grid input{padding:13px!important}
 #remoteOrderBox{box-shadow:0 8px 28px #0000000d}
 @media(max-width:420px){.order-mode{grid-template-columns:1fr 1fr}.modebtn{font-size:13px;padding:12px 7px!important}}
+
+/* ===== UnNo Tea V4.1: tối ưu desktop/POS ===== */
+@media (min-width: 1000px){
+  main#admin{
+    max-width:1680px;
+    padding-left:22px;
+    padding-right:22px;
+  }
+  #admin #dash{
+    width:100%;
+  }
+  #admin .adminbar{
+    flex-wrap:wrap;
+  }
+
+  /* Order tại quầy: tận dụng chiều ngang, giỏ cố định bên phải */
+  .counter-wrap{
+    grid-template-columns:minmax(0,1fr) 350px;
+    gap:18px;
+    align-items:start;
+  }
+  .counter-menu{
+    min-width:0;
+  }
+  .counter-menu .grid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:12px;
+  }
+  .counter-menu .card{
+    border-radius:14px;
+  }
+  .counter-menu .pic{
+    aspect-ratio:1.35;
+  }
+  .counter-menu .body{
+    padding:10px;
+  }
+  .counter-menu .name{
+    font-size:14px;
+    line-height:1.25;
+    min-height:35px;
+  }
+  .counter-menu .desc{
+    display:none;
+  }
+  .counter-menu .mt{
+    margin-top:8px;
+  }
+  .counter-menu .price{
+    font-size:14px;
+  }
+  .counter-menu .add{
+    padding:8px 10px;
+    border-radius:10px;
+    font-size:13px;
+  }
+  .counter-cart{
+    top:82px;
+    border-radius:16px;
+    padding:16px;
+  }
+  .counter-catbar{
+    gap:6px;
+    padding-bottom:9px;
+  }
+  .counter-cat{
+    padding:8px 12px;
+    font-size:13px;
+  }
+  #counterSearch{
+    height:46px;
+  }
+}
+
+@media (min-width: 1350px){
+  main#admin{
+    max-width:1760px;
+  }
+  .counter-wrap{
+    grid-template-columns:minmax(0,1fr) 370px;
+    gap:20px;
+  }
+  .counter-menu .grid{
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:12px;
+  }
+}
+
+@media (min-width: 1750px){
+  main#admin{
+    max-width:1840px;
+  }
+  .counter-menu .grid{
+    grid-template-columns:repeat(7,minmax(0,1fr));
+  }
+}
+
+/* Laptop nhỏ */
+@media (min-width: 761px) and (max-width: 999px){
+  main#admin{
+    max-width:100%;
+    padding-left:12px;
+    padding-right:12px;
+  }
+  .counter-wrap{
+    grid-template-columns:minmax(0,1fr) 300px;
+    gap:12px;
+  }
+  .counter-menu .grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+  .counter-menu .body{padding:9px}
+  .counter-menu .name{font-size:13px}
+  .counter-menu .desc{display:none}
+  .counter-menu .add{padding:8px 9px;font-size:12px}
+}
+
+/* Điện thoại vẫn ưu tiên 2 món / hàng */
+@media (max-width:760px){
+  main#admin{padding-left:10px;padding-right:10px}
+  .counter-wrap{grid-template-columns:1fr}
+  .counter-menu .grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .counter-menu .body{padding:9px}
+  .counter-menu .name{font-size:13px;line-height:1.25}
+  .counter-menu .desc{display:none}
+  .counter-menu .pic{aspect-ratio:1.25}
+  .counter-menu .add{padding:8px 9px;font-size:12px}
+}
+
+/* Header trong trang admin gọn hơn */
+#admin #dash > .row h1{
+  margin:8px 0 12px;
+}
+#admin .adminbar{
+  margin-bottom:14px;
+}
+
 </style>
 
 
@@ -123,9 +264,213 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
   @keyframes choicePop{0%{transform:scale(.92)}70%{transform:scale(1.045)}100%{transform:scale(1)}}
 }
 </style>
+<style id="unno-v42-pos">
+/* ===== UnNo Tea V4.2: POS theo mẫu người dùng chọn ===== */
+body.admin-mode header .nav{
+  max-width:1800px;
+  padding:10px 22px;
+}
+body.admin-mode .logo{width:56px;height:56px}
+body.admin-mode .brand{font-size:19px;letter-spacing:.2px}
+body.admin-mode .brandbox{min-width:175px}
+#adminNavSlot{display:none;flex:1;min-width:0}
+body.admin-mode #adminNavSlot{display:block}
+body.admin-mode #adminNavSlot .adminbar{
+  margin:0 14px;
+  display:flex;
+  gap:7px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+body.admin-mode #adminNavSlot .adminbar::-webkit-scrollbar{display:none}
+body.admin-mode #adminNavSlot .tab{
+  white-space:nowrap;
+  padding:11px 14px;
+  border-radius:10px;
+  background:#fff;
+  font-weight:700;
+}
+body.admin-mode #adminNavSlot .tab.active{
+  background:#171717;
+  color:#fff;
+  border-color:#171717;
+}
+body.admin-mode #table{
+  min-width:86px;
+  text-align:center;
+  padding:10px 16px;
+}
+body.admin-mode main#admin{
+  max-width:1800px!important;
+  padding:14px 22px 45px!important;
+}
+body.admin-mode #dash>.row:first-of-type{
+  display:none!important;
+}
+body.admin-mode #newOrderAlert{
+  margin-top:0;
+}
+
+/* POS page header card */
+body.admin-mode.counter-view #adminView>.panel:first-child{
+  border-radius:15px;
+  padding:17px 20px!important;
+  box-shadow:0 1px 0 rgba(0,0,0,.02);
+}
+body.admin-mode.counter-view #adminView>.panel:first-child h2{
+  font-size:24px;
+  letter-spacing:-.3px;
+}
+body.admin-mode.counter-view .counter-wrap{
+  grid-template-columns:minmax(0,1fr) 365px!important;
+  gap:14px!important;
+  align-items:stretch;
+}
+body.admin-mode.counter-view .counter-menu{
+  min-width:0;
+}
+body.admin-mode.counter-view .search-wrap{
+  margin-bottom:10px;
+}
+body.admin-mode.counter-view #counterSearch{
+  height:48px!important;
+  border-radius:12px;
+  font-size:14px;
+  padding-left:44px;
+}
+body.admin-mode.counter-view .counter-catbar{
+  gap:6px;
+  padding:1px 0 11px;
+}
+body.admin-mode.counter-view .counter-cat{
+  padding:9px 13px!important;
+  border-radius:999px;
+  font-size:13px!important;
+}
+body.admin-mode.counter-view .counter-menu .grid{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+body.admin-mode.counter-view .counter-menu .card{
+  border-radius:12px!important;
+  overflow:hidden;
+  min-width:0;
+}
+body.admin-mode.counter-view .counter-menu .pic{
+  aspect-ratio:1.35!important;
+  height:auto;
+}
+body.admin-mode.counter-view .counter-menu .body{
+  padding:9px 10px 10px!important;
+}
+body.admin-mode.counter-view .counter-menu .name{
+  font-size:13px!important;
+  min-height:33px!important;
+  line-height:1.25!important;
+  font-weight:850;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+body.admin-mode.counter-view .counter-menu .desc{
+  display:none!important;
+}
+body.admin-mode.counter-view .counter-menu .mt{
+  margin-top:6px!important;
+}
+body.admin-mode.counter-view .counter-menu .price{
+  font-size:13px!important;
+}
+body.admin-mode.counter-view .counter-menu .add{
+  width:34px;
+  height:34px;
+  padding:0!important;
+  border-radius:10px!important;
+  font-size:0!important;
+  display:grid;
+  place-items:center;
+}
+body.admin-mode.counter-view .counter-menu .add::after{
+  content:"+";
+  font-size:20px;
+  line-height:1;
+}
+
+/* Cart sidebar like the reference */
+body.admin-mode.counter-view .counter-cart{
+  position:sticky;
+  top:87px;
+  max-height:calc(100vh - 105px);
+  min-height:calc(100vh - 112px);
+  border-radius:14px!important;
+  padding:16px!important;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+}
+.counter-cart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.counter-cart-title{display:flex;align-items:center;gap:8px}
+.counter-badge{min-width:27px;height:27px;padding:0 7px;border-radius:999px;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900}
+.counter-empty-visual{padding:26px 10px 22px;text-align:center;color:#777}
+.counter-empty-icon{width:76px;height:76px;margin:0 auto 10px;border-radius:50%;background:#f0f0ee;display:grid;place-items:center;font-size:36px;filter:grayscale(1)}
+.counter-cart-form{margin-top:auto}
+.counter-tip{margin-top:16px;background:#faf7f1;border:1px solid #eee6da;border-radius:13px;padding:13px 14px;color:#6d4539;font-size:12px;line-height:1.55}
+.counter-tip b{display:block;color:#4d3028;margin-bottom:5px;font-size:13px}
+.counter-tip ul{margin:0;padding-left:17px}
+body.admin-mode.counter-view .counter-note{
+  min-height:78px;
+  resize:vertical;
+}
+body.admin-mode.counter-view .counter-submit{
+  min-height:52px;
+  border-radius:12px;
+  font-size:15px;
+}
+
+/* Keep other admin pages wide too */
+body.admin-mode .orders{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+body.admin-mode .qrgrid{
+  grid-template-columns:repeat(6,minmax(0,1fr));
+}
+
+/* Responsive POS */
+@media(max-width:1450px){
+  body.admin-mode.counter-view .counter-wrap{grid-template-columns:minmax(0,1fr) 340px!important}
+  body.admin-mode.counter-view .counter-menu .grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+}
+@media(max-width:1180px){
+  body.admin-mode header .nav{padding-left:12px;padding-right:12px}
+  body.admin-mode .brandbox{min-width:135px}
+  body.admin-mode #adminNavSlot .tab{padding:9px 10px;font-size:12px}
+  body.admin-mode.counter-view .counter-wrap{grid-template-columns:minmax(0,1fr) 315px!important}
+  body.admin-mode.counter-view .counter-menu .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  body.admin-mode .orders{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  body.admin-mode #adminNavSlot{order:4;flex-basis:100%}
+  body.admin-mode #adminNavSlot .adminbar{margin:6px 0 0}
+  body.admin-mode.counter-view .counter-wrap{grid-template-columns:1fr!important}
+  body.admin-mode.counter-view .counter-cart{position:static;min-height:auto;max-height:none}
+  body.admin-mode.counter-view .counter-menu .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:600px){
+  body.admin-mode main#admin{padding:10px 9px 40px!important}
+  body.admin-mode .logo{width:46px;height:46px}
+  body.admin-mode .brandbox{min-width:0}
+  body.admin-mode .brand{font-size:16px}
+  body.admin-mode #table{min-width:auto;padding:8px 11px}
+  body.admin-mode.counter-view .counter-menu .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.admin-mode .orders{grid-template-columns:1fr}
+  body.admin-mode .qrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
 </head>
 <body>
-<header><div class="nav"><img class="logo" src="logo.jpg"><div><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="table" class="table">Bàn —</div></div></header>
+<header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
 
 <main id="customer">
 <section class="hero"><img src="logo.jpg"><div><h1>Menu hôm nay</h1><p>Quét QR, chọn món và gửi order trực tiếp cho quán.</p></div></section>
@@ -213,6 +558,7 @@ function setOrderMode(mode){
   u.searchParams.set("order",mode);
   history.replaceState(null,"",u);
   updateOrderModeUI();
+if(!isAdminPath&&!params.get("admin"))document.body.classList.remove("admin-mode","counter-view");
 }
 updateOrderModeUI();
 let menu=[],rawCart=JSON.parse(sessionStorage.getItem("uno_cart")||"[]"),cart=[],adminView="orders",channel=null;
@@ -380,9 +726,24 @@ function showErr(x){console.warn(x)}
 
 async function login(){if(!sb)return;let e=document.getElementById("email").value,p=document.getElementById("password").value;let {error}=await sb.auth.signInWithPassword({email:e,password:p});document.getElementById("loginMsg").innerHTML=error?`<div class="notice error">${esc(error.message)}</div>`:"";if(!error)adminUI()}
 async function logout(){await sb.auth.signOut();location.href="/"}
-async function adminUI(){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";let {data:{session}}=await sb.auth.getSession();if(session){document.getElementById("loginBox").style.display="none";document.getElementById("dash").style.display="block";showAdmin(adminView)}}
+async function adminUI(){
+  document.body.classList.add("admin-mode");
+  document.getElementById("customer").style.display="none";
+  document.getElementById("cartBar").style.display="none";
+  document.getElementById("admin").style.display="block";
+  let {data:{session}}=await sb.auth.getSession();
+  if(session){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("dash").style.display="block";
+    const bar=document.querySelector("#dash .adminbar");
+    const slot=document.getElementById("adminNavSlot");
+    if(bar&&slot&&!slot.contains(bar))slot.appendChild(bar);
+    showAdmin(adminView);
+  }
+}
 async function showAdmin(v){
   adminView=v;counterOrdering=v==="counter";
+  document.body.classList.toggle("counter-view",v==="counter");
   document.querySelectorAll(".tab[data-v]").forEach(b=>b.classList.toggle("active",b.dataset.v===v));
   document.getElementById("cartBar").style.display="none";
   if(v==="orders"||v==="kitchen")await renderOrders(v);
@@ -395,22 +756,39 @@ function renderCounter(){
   counterOrdering=true;
   const cats=["Tất cả",...new Set(menu.filter(x=>x.cat!=="Topping"&&x.cat!=="Topping thêm").map(x=>x.cat))];
   document.getElementById("adminView").innerHTML=`
-    <div class="panel" style="margin-bottom:12px">
-      <div class="row"><div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Nhân viên chọn món và tạo đơn trực tiếp cho khách tại quầy.</div></div><button class="tab" onclick="clearCounterCart()">Xóa giỏ</button></div>
+    <div class="panel" style="margin-bottom:11px">
+      <div class="row">
+        <div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Nhân viên chọn món và tạo đơn trực tiếp cho khách tại quầy.</div></div>
+        <button class="tab" onclick="clearCounterCart()">🗑 Xóa giỏ</button>
+      </div>
     </div>
     <div class="counter-wrap">
       <div class="counter-menu">
-        <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="Tìm món..." oninput="renderCounterMenu()"></div>
-        <div id="counterCats" class="counter-catbar">${cats.map((c,i)=>`<button class="counter-cat ${c===counterCategory?'active':''}" onclick="setCounterCat(this,'${esc(c).replace(/'/g,"&#39;")}')">${esc(c)}</button>`).join("")}</div>
+        <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="Tìm món... (ví dụ: trà sữa, matcha, xoài, nem, trà trái cây...)" oninput="renderCounterMenu()"></div>
+        <div id="counterCats" class="counter-catbar">${cats.map(c=>`<button class="counter-cat ${c===counterCategory?'active':''}" onclick="setCounterCat(this,'${esc(c).replace(/'/g,"&#39;")}')">${esc(c)}</button>`).join("")}</div>
         <div id="counterMenu" class="grid"></div>
       </div>
       <div class="panel counter-cart">
-        <h3 style="margin-top:0">Giỏ tại quầy</h3>
+        <div class="counter-cart-head">
+          <div class="counter-cart-title"><span style="font-size:21px">🛒</span><h3 style="margin:0">Giỏ tại quầy</h3></div>
+          <span id="counterBadge" class="counter-badge">0</span>
+        </div>
         <div id="counterCartItems"></div>
-        <label>Ghi chú</label>
-        <textarea id="counterNote" class="counter-note" placeholder="Ít đá, ít đường, ghi chú..."></textarea>
-        <div class="total"><span>Tổng</span><span id="counterTotal">0đ</span></div>
-        <button class="primary counter-submit" onclick="submitCounterOrder()">Tạo đơn tại quầy</button>
+        <div class="counter-cart-form">
+          <label><b>Ghi chú</b></label>
+          <textarea id="counterNote" class="counter-note" placeholder="Ít đá, ít đường, ghi chú..."></textarea>
+          <div class="total"><span>Tổng</span><span id="counterTotal">0đ</span></div>
+          <button class="primary counter-submit" onclick="submitCounterOrder()">🧾 Tạo đơn tại quầy</button>
+          <div class="counter-tip">
+            <b>💡 Mẹo nhanh</b>
+            <ul>
+              <li>Dùng ô tìm kiếm để tìm món nhanh hơn.</li>
+              <li>Có thể lọc theo danh mục món.</li>
+              <li>Sau khi tạo đơn, đơn sẽ hiện ở Đơn hàng và Bếp.</li>
+              <li>In hóa đơn từ trang Đơn hàng.</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>`;
   renderCounterMenu();renderCounterCart();
@@ -426,12 +804,14 @@ function renderCounterMenu(){
   if(counterCategory!=="Tất cả")d=d.filter(x=>x.cat===counterCategory);
   const q=document.getElementById("counterSearch")?.value||"";
   if(q)d=d.filter(g=>groupMatches(g,q));
-  box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;return `<article class="card" data-key="${encodeURIComponent(g.key)}"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc||"")}</div><div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button class="add" type="button">+ Chọn</button></div></div></article>`}).join("")||'<div class="counter-empty">Không tìm thấy món phù hợp.</div>';
+  box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;return `<article class="card" data-key="${encodeURIComponent(g.key)}"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc||"")}</div><div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button class="add" type="button" aria-label="Chọn ${esc(g.name)}">+</button></div></div></article>`}).join("")||'<div class="counter-empty">Không tìm thấy món phù hợp.</div>';
   box.querySelectorAll(".card").forEach(card=>card.addEventListener("click",()=>openOptions(decodeURIComponent(card.dataset.key))));
 }
 function renderCounterCart(){
   const box=document.getElementById("counterCartItems");if(!box)return;
-  box.innerHTML=cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join("")||'<div class="empty">Chưa chọn món.</div>';
+  const count=cart.reduce((a,x)=>a+x.qty,0);
+  const badge=document.getElementById("counterBadge");if(badge)badge.textContent=count;
+  box.innerHTML=cart.length?cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join(""):'<div class="counter-empty-visual"><div class="counter-empty-icon">🛒</div><div>Chưa chọn món.</div></div>';
   document.getElementById("counterTotal").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0));
 }
 function counterChg(i,d){let x=cart[i];if(!x)return;x.qty+=d;if(x.qty<1)cart.splice(i,1);sessionStorage.setItem("uno_cart",JSON.stringify(cart));renderCounterCart()}
