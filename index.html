@@ -95,7 +95,7 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
   <div class="delivery-grid">
     <input id="customerName" autocomplete="name" placeholder="Tên khách hàng *">
     <input id="customerPhone" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại *">
-    <input id="customerAddress" class="wide" autocomplete="street-address" placeholder="Địa chỉ giao hàng *">
+    <input id="customerAddress" class="wide" autocomplete="street-address" placeholder="Link vị trí bản đồ hoặc nick Facebook đã đặt *">
   </div>
   <div id="onlineModeHint" class="small" style="margin-top:9px">Chọn hình thức nhận món để tiếp tục.</div>
 </section>
@@ -138,7 +138,7 @@ function updateOrderModeUI(){
   const addr=document.getElementById("customerAddress");
   if(addr){addr.style.display=orderMode==="delivery"?"block":"none";addr.required=orderMode==="delivery";}
   const hint=document.getElementById("onlineModeHint");
-  if(hint)hint.textContent=orderMode==="delivery"?"Quán sẽ giao đến địa chỉ bạn nhập.":orderMode==="pickup"?"Quán sẽ chuẩn bị sẵn để bạn đến lấy.":"Chọn hình thức nhận món để tiếp tục.";
+  if(hint)hint.textContent=orderMode==="delivery"?"Nhập link vị trí bản đồ hoặc nick Facebook đã đặt để quán xác nhận giao hàng.":orderMode==="pickup"?"Quán sẽ chuẩn bị sẵn để bạn đến lấy.":"Chọn hình thức nhận món để tiếp tục.";
   const db=document.getElementById("deliveryBtn"), pb=document.getElementById("pickupBtn");
   if(db)db.classList.toggle("active",orderMode==="delivery");
   if(pb)pb.classList.toggle("active",orderMode==="pickup");
@@ -199,13 +199,13 @@ async function placeOrder(){
     const address=document.getElementById("customerAddress").value.trim();
     if(!name)return alert("Vui lòng nhập tên khách hàng.");
     if(!phone)return alert("Vui lòng nhập số điện thoại.");
-    if(orderMode==="delivery"&&!address)return alert("Vui lòng nhập địa chỉ nhận hàng.");
+    if(orderMode==="delivery"&&!address)return alert("Vui lòng nhập link vị trí bản đồ hoặc nick Facebook đã đặt.");
     tableValue=orderMode==="delivery"?"GIAO HÀNG":"MANG VỀ";
     const info=[
       orderMode==="delivery"?"[GIAO HÀNG]":"[MANG VỀ]",
       "Khách: "+name,
       "SĐT: "+phone,
-      orderMode==="delivery"?"Địa chỉ: "+address:"",
+      orderMode==="delivery"?"Vị trí/Facebook: "+address:"",
       note?"Ghi chú: "+note:""
     ].filter(Boolean).join("\n");
     note=info;
