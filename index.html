@@ -17,6 +17,16 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 #admin{display:none}.adminbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.tab{padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}.tab.active{background:#111;color:#fff}.orders{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.order,.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}.order h3{margin:0}.order ul{margin:9px 0;padding-left:19px}.status{font-size:12px;color:var(--muted);margin:4px 0 9px}.actions{display:flex;gap:7px;margin-top:11px}.actions button{flex:1;padding:9px;border-radius:10px;border:0;background:#eee}.actions .next{background:#111;color:#fff}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.formgrid .wide{grid-column:1/-1}.listrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.qrgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.qr{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}.qr canvas{max-width:100%;height:auto!important}.login{max-width:420px;margin:50px auto}.empty{text-align:center;padding:35px;color:var(--muted)}
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.orders{grid-template-columns:1fr}.qrgrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.hero h1{font-size:24px}.hero img{width:70px;height:70px}.grid{gap:10px}.body{padding:10px}}
 .drink-note{font-size:11px;color:#7a7a7a;margin-top:6px;display:flex;align-items:center;gap:5px}.drink-note:before{content:"✓";font-weight:900;color:#111}.card{cursor:pointer;-webkit-tap-highlight-color:transparent}.handle{width:42px;height:5px;border-radius:999px;background:#d7d7d7;margin:0 auto 12px}.option-summary{background:#f6f6f4;border-radius:16px;padding:12px 13px;margin:12px 0;font-size:13px}.option-summary b{display:block;margin-bottom:3px}.option-price{font-size:18px;font-weight:900}.sheet{padding-bottom:max(20px,env(safe-area-inset-bottom))}.modal{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+
+.order-mode{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px}
+.modebtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:800}
+.modebtn.active{background:#111;color:#fff;border-color:#111}
+.delivery-box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin:0 0 16px}
+.delivery-box h3{margin:0 0 4px}.delivery-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+.delivery-grid .wide{grid-column:1/-1}.sharebox{background:#f6f6f4;border-radius:14px;padding:12px;margin-top:12px}
+.shareline{display:flex;gap:8px;align-items:center;margin-top:8px}.shareline input{min-width:0}.shareline button{white-space:nowrap;border:0;border-radius:10px;padding:10px 12px;font-weight:800}
+@media(max-width:520px){.delivery-grid{grid-template-columns:1fr}}
+
 </style>
 
 <style id="uno-motion-v3">
@@ -45,10 +55,24 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 </style>
 </head>
 <body>
-<header><div class="nav"><img class="logo" src="logo.jpg"><div><div class="brand">UnNo Tea</div><div class="small">Order tại bàn • Est. 2021</div></div><div id="table" class="table">Bàn —</div></div></header>
+<header><div class="nav"><img class="logo" src="logo.jpg"><div><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="table" class="table">Bàn —</div></div></header>
 
 <main id="customer">
 <section class="hero"><img src="logo.jpg"><div><h1>Menu hôm nay</h1><p>Quét QR, chọn món và gửi order trực tiếp cho quán.</p></div></section>
+<section id="remoteOrderBox" class="delivery-box" style="display:none">
+  <h3>Đặt món từ xa</h3>
+  <div class="small">Chọn cách nhận món, sau đó nhập thông tin để quán xác nhận đơn.</div>
+  <div class="order-mode">
+    <button id="deliveryBtn" class="modebtn" type="button" onclick="setOrderMode('delivery')">🚚 Giao tận nơi</button>
+    <button id="pickupBtn" class="modebtn" type="button" onclick="setOrderMode('pickup')">🥡 Tự đến lấy</button>
+  </div>
+  <div class="delivery-grid">
+    <input id="customerName" placeholder="Tên khách hàng">
+    <input id="customerPhone" inputmode="tel" placeholder="Số điện thoại">
+    <input id="customerAddress" class="wide" placeholder="Địa chỉ nhận hàng">
+  </div>
+</section>
+
 <div id="cats" class="cats"></div><section id="menu" class="grid"></section>
 </main>
 
@@ -67,7 +91,7 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 
 <div id="cartBar" class="cart"><span><b id="count">0</b> món • <b id="sum">0đ</b></span><button onclick="openCart()">Xem giỏ hàng</button></div>
 <div id="optionModal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><h2 id="optionTitle">Chọn món</h2><button class="close" onclick="closeOptions()">×</button></div><div id="optionBody"></div><button id="optionAdd" class="primary" onclick="confirmOptions()">Thêm vào giỏ</button></div></div>
-<div id="modal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><h2>Giỏ hàng</h2><button class="close" onclick="closeCart()">×</button></div><div id="cartItems"></div><label>Ghi chú</label><textarea id="note" placeholder="Ít đá, ít đường, không topping..."></textarea><div class="total"><span>Tổng</span><span id="modalSum">0đ</span></div><button class="primary" onclick="placeOrder()">Gửi order</button></div></div>
+<div id="modal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><h2>Giỏ hàng</h2><button class="close" onclick="closeCart()">×</button></div><div id="cartItems"></div><label>Ghi chú cho quán</label><textarea id="note" placeholder="Ít đá, ít đường, thời gian muốn nhận..."></textarea><div class="total"><span>Tổng</span><span id="modalSum">0đ</span></div><button id="placeOrderBtn" class="primary" onclick="placeOrder()">Gửi order</button></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
@@ -75,8 +99,28 @@ main{max-width:1120px;margin:auto;padding:20px 16px 100px}.hero{display:flex;ali
 <script>
 const cfg=window.UNO_CONFIG||{}; const ready=cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_URL.includes("PASTE_");
 const sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
-const params=new URLSearchParams(location.search); const table=params.get("table")||"—";
-document.getElementById("table").textContent="Bàn "+table;
+const params=new URLSearchParams(location.search);
+const table=params.get("table")||"—";
+let orderParam=(params.get("order")||"").toLowerCase();
+let orderMode=["delivery","pickup"].includes(orderParam)?orderParam:(orderParam==="online"?"online":"table");
+function updateOrderModeUI(){
+  const remote=orderMode!=="table";
+  document.getElementById("remoteOrderBox").style.display=remote?"block":"none";
+  document.getElementById("customerAddress").style.display=orderMode==="delivery"?"block":"none";
+  document.getElementById("deliveryBtn").classList.toggle("active",orderMode==="delivery");
+  document.getElementById("pickupBtn").classList.toggle("active",orderMode==="pickup");
+  document.getElementById("table").textContent=orderMode==="delivery"?"🚚 Giao hàng":orderMode==="pickup"?"🥡 Mang về":orderMode==="online"?"Đặt online":"Bàn "+table;
+  document.getElementById("headSub").textContent=remote?"Đặt món online • Est. 2021":"Order tại bàn • Est. 2021";
+}
+function setOrderMode(mode){
+  orderMode=mode;
+  const u=new URL(location.href);
+  u.searchParams.delete("table");
+  u.searchParams.set("order",mode);
+  history.replaceState(null,"",u);
+  updateOrderModeUI();
+}
+updateOrderModeUI();
 let menu=[],rawCart=JSON.parse(sessionStorage.getItem("uno_cart")||"[]"),cart=[],adminView="orders",channel=null;
 const money=n=>new Intl.NumberFormat("vi-VN").format(n)+"đ";
 const drinkCats=["Trà sữa","Best Seller","Sinh tố","Trà trái cây","Matcha","Coffee","Nước ép","Sữa tươi","Sữa chua","Mojito"];
@@ -108,7 +152,44 @@ function confirmOptions(){if(!pickVariant)return;let tops=pickToppings.map(id=>m
 function openCart(){document.getElementById("modal").classList.add("open");document.body.style.overflow="hidden";renderCart()}function closeCart(){document.getElementById("modal").classList.remove("open");document.body.style.overflow=""}
 function renderCart(){document.getElementById("cartItems").innerHTML=cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="chg(${i},-1)">−</button><span>${x.qty}</span><button onclick="chg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join("")||'<div class="empty">Chưa có món.</div>';document.getElementById("modalSum").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0))}
 function chg(i,d){let x=cart[i];if(!x)return;x.qty+=d;if(x.qty<1)cart.splice(i,1);setCart();renderCart()}
-async function placeOrder(){if(!cart.length)return alert("Giỏ hàng trống.");if(!sb)return alert("Website chưa kết nối Supabase. Hãy điền config.js.");const orderId=Date.now();const payload={id:orderId,table_number:String(table),status:"Mới",note:document.getElementById("note").value.trim()};let {error}=await sb.from("orders").insert(payload);if(error)return alert(error.message);let rows=cart.map(x=>({order_id:orderId,menu_item_id:x.menuItemId||null,item_name:x.name,price:x.unitPrice,quantity:x.qty}));let r=await sb.from("order_items").insert(rows);if(r.error){await sb.from("orders").delete().eq("id",orderId);return alert(r.error.message)}cart=[];setCart();closeCart();document.getElementById("note").value="";alert("Đã gửi order thành công!")}
+async function placeOrder(){
+  if(!cart.length)return alert("Giỏ hàng trống.");
+  if(!sb)return alert("Website chưa kết nối Supabase. Hãy điền config.js.");
+  let note=document.getElementById("note").value.trim();
+  let tableValue=String(table);
+  if(orderMode==="online")return alert("Vui lòng chọn Giao tận nơi hoặc Tự đến lấy.");
+  if(orderMode!=="table"){
+    const name=document.getElementById("customerName").value.trim();
+    const phone=document.getElementById("customerPhone").value.trim();
+    const address=document.getElementById("customerAddress").value.trim();
+    if(!name)return alert("Vui lòng nhập tên khách hàng.");
+    if(!phone)return alert("Vui lòng nhập số điện thoại.");
+    if(orderMode==="delivery"&&!address)return alert("Vui lòng nhập địa chỉ nhận hàng.");
+    tableValue=orderMode==="delivery"?"GIAO HÀNG":"MANG VỀ";
+    const info=[
+      orderMode==="delivery"?"[GIAO HÀNG]":"[MANG VỀ]",
+      "Khách: "+name,
+      "SĐT: "+phone,
+      orderMode==="delivery"?"Địa chỉ: "+address:"",
+      note?"Ghi chú: "+note:""
+    ].filter(Boolean).join("\n");
+    note=info;
+  }
+  const orderId=Date.now();
+  const payload={id:orderId,table_number:tableValue,status:"Mới",note};
+  let {error}=await sb.from("orders").insert(payload);
+  if(error)return alert(error.message);
+  let rows=cart.map(x=>({order_id:orderId,menu_item_id:x.menuItemId||null,item_name:x.name,price:x.unitPrice,quantity:x.qty}));
+  let r=await sb.from("order_items").insert(rows);
+  if(r.error){await sb.from("orders").delete().eq("id",orderId);return alert(r.error.message)}
+  cart=[];setCart();closeCart();document.getElementById("note").value="";
+  if(orderMode!=="table"){
+    document.getElementById("customerName").value="";
+    document.getElementById("customerPhone").value="";
+    document.getElementById("customerAddress").value="";
+  }
+  alert(orderMode==="delivery"?"Đã gửi đơn giao hàng! Quán sẽ liên hệ xác nhận.":orderMode==="pickup"?"Đã gửi đơn mang về! Quán sẽ liên hệ xác nhận.":"Đã gửi order thành công!");
+}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function showErr(x){console.warn(x)}
 
@@ -117,7 +198,13 @@ async function logout(){await sb.auth.signOut();location.href=location.pathname}
 async function adminUI(){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";let {data:{session}}=await sb.auth.getSession();if(session){document.getElementById("loginBox").style.display="none";document.getElementById("dash").style.display="block";showAdmin(adminView)}}
 async function showAdmin(v){adminView=v;document.querySelectorAll(".tab[data-v]").forEach(b=>b.classList.toggle("active",b.dataset.v===v));if(v==="orders"||v==="kitchen")await renderOrders(v);if(v==="menu")renderManage();if(v==="qr")renderQR()}
 async function renderOrders(view){let q=sb.from("orders").select("*,order_items(*)").order("created_at",{ascending:false});if(view==="kitchen")q=q.neq("status","Hoàn thành");let {data,error}=await q;if(error)return adminView.innerHTML=`<div class="notice error">${esc(error.message)}</div>`;document.getElementById("adminView").innerHTML=`<div class="orders">${(data||[]).map(orderCard).join("")||'<div class="empty">Chưa có đơn.</div>'}</div>`}
-function orderCard(o){let total=(o.order_items||[]).reduce((a,i)=>a+i.price*i.quantity,0);let next=o.status==="Mới"?"Đang làm":o.status==="Đang làm"?"Hoàn thành":"";return `<article class="order"><h3>Bàn ${esc(o.table_number)}</h3><div class="status">${esc(o.status)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div><ul>${(o.order_items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity}</li>`).join("")}</ul>${o.note?`<div class="small"><b>Ghi chú:</b> ${esc(o.note)}</div>`:""}<div class="row mt"><b>${money(total)}</b></div><div class="actions">${next?`<button class="next" onclick="advance(${o.id},'${next}')">${next}</button>`:""}<button onclick="delOrder(${o.id})">Xóa</button></div></article>`}
+function orderCard(o){
+  let total=(o.order_items||[]).reduce((a,i)=>a+i.price*i.quantity,0);
+  let next=o.status==="Mới"?"Đang làm":o.status==="Đang làm"?"Hoàn thành":"";
+  let label=o.table_number==="GIAO HÀNG"?"🚚 Giao hàng":o.table_number==="MANG VỀ"?"🥡 Mang về":"Bàn "+esc(o.table_number);
+  return `<article class="order"><h3>${label}</h3><div class="status">${esc(o.status)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div><ul>${(o.order_items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity}</li>`).join("")}</ul>${o.note?`<div class="small" style="white-space:pre-line"><b>Thông tin:</b>
+${esc(o.note)}</div>`:""}<div class="row mt"><b>${money(total)}</b></div><div class="actions">${next?`<button class="next" onclick="advance(${o.id},'${next}')">${next}</button>`:""}<button onclick="delOrder(${o.id})">Xóa</button></div></article>`
+}
 async function advance(id,status){let {error}=await sb.from("orders").update({status}).eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
 async function delOrder(id){if(!confirm("Xóa đơn này?"))return;let {error}=await sb.from("orders").delete().eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
 function renderManage(){document.getElementById("adminView").innerHTML=`<div class="panel"><h2>Thêm món</h2><div class="formgrid"><input id="mn" placeholder="Tên món"><input id="mp" type="number" placeholder="Giá"><input id="mc" placeholder="Danh mục"><input id="mi" placeholder="URL ảnh"><input id="md" class="wide" placeholder="Mô tả"><input id="ms" type="number" value="0" placeholder="Thứ tự"><button class="primary wide" onclick="addMenu()">Thêm món</button></div></div><div class="panel" style="margin-top:12px"><h2>Menu hiện tại</h2><div id="menulist">Đang tải...</div></div>`;loadManage()}
@@ -125,7 +212,22 @@ async function loadManage(){let {data,error}=await sb.from("menu_items").select(
 async function addMenu(){let name=mn.value.trim(),price=+mp.value,category=mc.value.trim();if(!name||!price||!category)return alert("Cần tên, giá và danh mục.");let {error}=await sb.from("menu_items").insert({name,price,category,image_url:mi.value.trim()||"logo.jpg",description:md.value.trim(),sort_order:+ms.value||0,is_available:true});if(error)alert(error.message);else renderManage()}
 async function toggleItem(id,on){await sb.from("menu_items").update({is_available:on}).eq("id",id);loadManage();loadMenu()}
 async function delItem(id){if(!confirm("Xóa món?"))return;await sb.from("menu_items").delete().eq("id",id);loadManage();loadMenu()}
-function renderQR(){let base=location.origin+location.pathname;document.getElementById("adminView").innerHTML=`<div class="panel"><h2>QR từng bàn</h2><p class="small">In từng QR và dán lên bàn. Khi deploy trên Vercel, QR sẽ trỏ về website thật.</p><div class="qrgrid">${Array.from({length:30},(_,i)=>i+1).map(n=>`<div class="qr"><b>Bàn ${n}</b><canvas id="q${n}"></canvas><button class="tab" onclick="printQR(${n})">In QR</button></div>`).join("")}</div></div>`;for(let n=1;n<=30;n++)QRCode.toCanvas(document.getElementById("q"+n),base+"?table="+n,{width:150,margin:1})}
+function renderQR(){
+  let base=location.origin+location.pathname;
+  let online=base+"?order=online";
+  document.getElementById("adminView").innerHTML=`
+  <div class="panel">
+    <h2>Link đặt hàng online</h2>
+    <p class="small">Chỉ cần gửi 1 link cho khách. Khách tự chọn Giao tận nơi hoặc Tự đến lấy.</p>
+    <div class="sharebox"><b>🔗 Link đặt món UnNo Tea</b><div class="shareline"><input id="onlineLink" readonly value="${esc(online)}"><button onclick="copyLink('onlineLink')">Sao chép</button></div></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h2>QR từng bàn</h2><p class="small">In từng QR và dán lên bàn.</p><div class="qrgrid">${Array.from({length:30},(_,i)=>i+1).map(n=>`<div class="qr"><b>Bàn ${n}</b><canvas id="q${n}"></canvas><button class="tab" onclick="printQR(${n})">In QR</button></div>`).join("")}</div></div>`;
+  for(let n=1;n<=30;n++)QRCode.toCanvas(document.getElementById("q"+n),base+"?table="+n,{width:150,margin:1})
+}
+function copyLink(id){
+  const el=document.getElementById(id);el.select();el.setSelectionRange(0,99999);
+  navigator.clipboard?.writeText(el.value).then(()=>alert("Đã sao chép link!")).catch(()=>{document.execCommand("copy");alert("Đã sao chép link!")})
+}
 function printQR(n){let url=location.origin+location.pathname+"?table="+n;let w=open("","_blank");w.document.write(`<html><body style="text-align:center;font-family:Arial"><h1>UnNo Tea</h1><h2>BÀN ${n}</h2><canvas id="c"></canvas><p>Quét QR để gọi món</p><script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script><script>QRCode.toCanvas(document.getElementById('c'),'${url}',{width:350},()=>setTimeout(()=>print(),300))<\/script></body></html>`);w.document.close()}
 document.getElementById("optionModal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeOptions()});
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeCart()});
