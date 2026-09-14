@@ -1483,6 +1483,63 @@ body.admin-mode .qrgrid{
 }
 </style>
 
+
+<style id="unno-soldout-v496">
+.card{position:relative}
+.soldout-badge{position:absolute;top:8px;right:8px;z-index:5;background:#b42318;color:#fff;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:950;box-shadow:0 4px 12px #0002}
+.card.soldout-card .pic{filter:grayscale(.75);opacity:.55}
+.card.soldout-card .body{opacity:.78}
+.card.soldout-card .add{background:#ddd!important;color:#777!important;pointer-events:none}
+@media(max-width:760px){body:not(.admin-mode) .soldout-badge{top:6px;right:6px;padding:5px 7px;font-size:9.5px}}
+</style>
+
+<style id="unno-soldout-overlay-v497">
+.card.soldout-card{position:relative;overflow:hidden;opacity:1!important}
+.card.soldout-card .pic{filter:none!important;opacity:1!important}
+.card.soldout-card .body{opacity:1!important}
+.card.soldout-card::after{
+  content:"HẾT HÀNG";
+  position:absolute;
+  left:50%;
+  top:44%;
+  transform:translate(-50%,-50%) rotate(-8deg);
+  z-index:6;
+  padding:10px 18px;
+  border:3px solid rgba(180,35,24,.72);
+  border-radius:12px;
+  background:rgba(255,255,255,.42);
+  color:rgba(180,35,24,.88);
+  font-size:22px;
+  font-weight:950;
+  letter-spacing:1px;
+  text-shadow:0 1px 0 rgba(255,255,255,.7);
+  box-shadow:0 6px 22px rgba(0,0,0,.10);
+  backdrop-filter:blur(1.5px);
+  -webkit-backdrop-filter:blur(1.5px);
+  pointer-events:none;
+}
+.card.soldout-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:62%;
+  z-index:5;
+  background:rgba(255,255,255,.18);
+  pointer-events:none;
+}
+.card.soldout-card .soldout-badge{display:none!important}
+.card.soldout-card .add{background:#ddd!important;color:#777!important;pointer-events:none}
+@media(max-width:760px){
+  body:not(.admin-mode) .card.soldout-card::after{
+    top:42%;
+    padding:7px 11px;
+    border-width:2px;
+    border-radius:9px;
+    font-size:15px;
+    letter-spacing:.6px;
+  }
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1598,7 +1655,7 @@ function setCart(){
   }
   if(c){bar.style.animation="none";requestAnimationFrame(()=>{bar.style.animation=""})}
 }
-async function loadMenu(){if(!sb){menu=demo;normalizeCart();renderCats();renderMenu();setCart();return}let {data,error}=await sb.from("menu_items").select("*").eq("is_available",true).order("sort_order").order("name");if(error){menu=demo;showErr(error.message)}else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||""}));normalizeCart();renderCats();renderMenu();setCart();}
+async function loadMenu(){if(!sb){menu=demo;normalizeCart();renderCats();renderMenu();setCart();return}let {data,error}=await sb.from("menu_items").select("*").order("sort_order").order("name");if(error){menu=demo;showErr(error.message)}else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||"",available:x.is_available!==false}));normalizeCart();renderCats();renderMenu();setCart();}
 const demo=[{id:1,name:"Trà sữa UnNo",cat:"Trà sữa",price:35000,img:"logo.jpg",desc:"Món mẫu — hãy thay bằng menu của quán."},{id:2,name:"Trà đào cam sả",cat:"Trà trái cây",price:32000,img:"logo.jpg",desc:"Thanh mát, thơm đào và cam."},{id:3,name:"Matcha latte",cat:"Matcha",price:39000,img:"logo.jpg",desc:"Matcha đậm vị, sữa mịn."}];
 function baseName(name){return String(name||"").replace(/ \((?:Size (?:M|L|XL)|Suất [^)]+)\)$/i,"").trim()}
 function optionLabel(m){let x=String(m.name||"").match(/ \((Size (?:M|L|XL)|Suất [^)]+)\)$/i);return x?x[1]:""}
@@ -1618,12 +1675,12 @@ function renderMenu(filter="Tất cả"){
  const q=document.getElementById("menuSearch")?.value||"";
  if(q)d=d.filter(g=>groupMatches(g,q));
  const box=document.getElementById("menu");
- box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;let drink=isDrinkCat(g.cat);return `<article class="card" data-key="${encodeURIComponent(g.key)}" tabindex="0"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc|| (multi?"Chọn size khi thêm món":""))}</div>${drink?'<div class="drink-note">Đồ uống đã bao gồm topping</div>':''}<div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button type="button" class="add">+ Chọn món</button></div></div></article>`}).join("")||'<div class="empty">Không tìm thấy món phù hợp.</div>';
- box.querySelectorAll(".card").forEach(card=>{let go=()=>openOptions(decodeURIComponent(card.dataset.key));card.addEventListener("click",e=>{if(e.target.closest("button"))e.stopPropagation();go()});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})});
+ box.innerHTML=d.map(g=>{let availableVariants=g.variants.filter(v=>v.available!==false);let soldout=!availableVariants.length;let priced=availableVariants.length?availableVariants:g.variants;let min=Math.min(...priced.map(v=>+v.price));let multi=g.variants.length>1;let drink=isDrinkCat(g.cat);return `<article class="card ${soldout?'soldout-card':''}" data-key="${encodeURIComponent(g.key)}" tabindex="${soldout?'-1':'0'}">${soldout?'<div class="soldout-badge">HẾT HÀNG</div>':''}<img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${soldout?'Món hiện đang hết hàng':esc(g.desc|| (multi?"Chọn size khi thêm món":""))}</div>${drink&&!soldout?'<div class="drink-note">Đồ uống đã bao gồm topping</div>':''}<div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button type="button" class="add" ${soldout?'disabled':''}>${soldout?'Hết hàng':'+ Chọn món'}</button></div></div></article>`}).join("")||'<div class="empty">Không tìm thấy món phù hợp.</div>';
+ box.querySelectorAll(".card:not(.soldout-card)").forEach(card=>{let go=()=>openOptions(decodeURIComponent(card.dataset.key));card.addEventListener("click",e=>{if(e.target.closest("button"))e.stopPropagation();go()});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})});
 }
 function cat(b,c){document.querySelectorAll("#cats .cat").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentCategory=c;renderMenu(c);b.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"})}
 let picking=null,pickVariant=null,pickToppings=[];
-function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;picking=g;pickVariant=g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();document.getElementById("optionModal").classList.add("open");document.body.style.overflow="hidden"}
+function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;let available=g.variants.filter(v=>v.available!==false);if(!available.length)return alert("Món này hiện đang hết hàng.");picking={...g,variants:available};pickVariant=available[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();document.getElementById("optionModal").classList.add("open");document.body.style.overflow="hidden"}
 function closeOptions(){document.getElementById("optionModal").classList.remove("open");document.body.style.overflow=""}
 function renderOptions(){let g=picking;if(!g)return;
 let currentImg=(pickVariant&&pickVariant.img)||g.img||"logo.jpg";
