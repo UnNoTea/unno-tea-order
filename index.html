@@ -1303,6 +1303,64 @@ body.admin-mode .qrgrid{
   body:not(.admin-mode) #menu .price{font-size:10px!important}
 }
 </style>
+<style id="unno-v49-option-image">
+/* ===== UnNo Tea V4.9: hiện ảnh món trong cửa sổ chọn món ===== */
+.option-product-image-wrap{
+  width:100%;
+  margin:0 0 12px;
+  border-radius:16px;
+  overflow:hidden;
+  background:#f4f1eb;
+  border:1px solid var(--line);
+}
+.option-product-image{
+  display:block;
+  width:100%;
+  height:230px;
+  object-fit:cover;
+  background:#f4f1eb;
+}
+.option-product-caption{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 11px;
+  background:#fff;
+}
+.option-product-caption .name{
+  font-weight:900;
+  font-size:14px;
+}
+.option-product-caption .cat{
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+@media(max-width:760px){
+  body:not(.admin-mode) .option-product-image-wrap{
+    margin:0 0 9px;
+    border-radius:13px;
+  }
+  body:not(.admin-mode) .option-product-image{
+    height:180px;
+  }
+  body:not(.admin-mode) .option-product-caption{
+    padding:7px 9px;
+  }
+  body:not(.admin-mode) .option-product-caption .name{
+    font-size:12px;
+  }
+  body:not(.admin-mode) .option-product-caption .cat{
+    font-size:9.5px;
+  }
+}
+@media(max-width:380px){
+  body:not(.admin-mode) .option-product-image{
+    height:155px;
+  }
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1445,10 +1503,15 @@ function cat(b,c){document.querySelectorAll("#cats .cat").forEach(x=>x.classList
 let picking=null,pickVariant=null,pickToppings=[];
 function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;picking=g;pickVariant=g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();document.getElementById("optionModal").classList.add("open");document.body.style.overflow="hidden"}
 function closeOptions(){document.getElementById("optionModal").classList.remove("open");document.body.style.overflow=""}
-function renderOptions(){let g=picking;if(!g)return;let sizes=g.variants.length>1?`<h3>Chọn size / loại</h3><div class="choice">${g.variants.map(v=>`<button type="button" class="${pickVariant&&pickVariant.id===v.id?'active':''}" onclick="pickSize(${v.id})">${esc(optionLabel(v)||v.name)} · ${money(v.price)}</button>`).join("")}</div>`:`<div class="option-summary"><b>${esc(optionLabel(pickVariant)||'Giá món')}</b><span class="option-price">${money(pickVariant?.price||0)}</span></div>`;
+function renderOptions(){let g=picking;if(!g)return;
+let currentImg=(pickVariant&&pickVariant.img)||g.img||"logo.jpg";
+let imageBlock=`<div class="option-product-image-wrap"><img class="option-product-image" src="${esc(currentImg)}" alt="${esc(g.name)}" onerror="this.src='logo.jpg'"><div class="option-product-caption"><span class="name">${esc(g.name)}</span><span class="cat">${esc(g.cat||"")}</span></div></div>`;
+let sizes=g.variants.length>1?`<h3>Chọn size / loại</h3><div class="choice">${g.variants.map(v=>`<button type="button" class="${pickVariant&&pickVariant.id===v.id?'active':''}" onclick="pickSize(${v.id})">${esc(optionLabel(v)||v.name)} · ${money(v.price)}</button>`).join("")}</div>`:`<div class="option-summary"><b>${esc(optionLabel(pickVariant)||'Giá món')}</b><span class="option-price">${money(pickVariant?.price||0)}</span></div>`;
 let tops=isDrinkCat(g.cat)?menu.filter(x=>x.cat==="Topping"):g.cat==="Mì cay – Nem nướng"?menu.filter(x=>x.cat==="Topping thêm"):[];
 let topping=tops.length?`<h3>${isDrinkCat(g.cat)?'Chọn topping':'Topping thêm'}</h3>${isDrinkCat(g.cat)?'<div class="small" style="margin:-6px 0 8px">Đồ uống đã bao gồm topping. Chọn topping bạn muốn dùng kèm.</div>':''}${tops.map(t=>`<label class="optrow"><span>${esc(t.name)} <b>+${money(t.price)}</b></span><input style="width:auto" type="checkbox" ${pickToppings.includes(t.id)?'checked':''} onchange="toggleTop(${t.id},this.checked)"></label>`).join("")}`:"";
-let total=(pickVariant?.price||0)+pickToppings.reduce((a,id)=>a+(menu.find(x=>x.id===id)?.price||0),0);document.getElementById("optionBody").innerHTML=sizes+topping+`<div class="option-summary"><b>Tạm tính</b><span class="option-price">${money(total)}</span></div>`;document.getElementById("optionAdd").textContent=`Thêm vào giỏ · ${money(total)}`}
+let total=(pickVariant?.price||0)+pickToppings.reduce((a,id)=>a+(menu.find(x=>x.id===id)?.price||0),0);
+document.getElementById("optionBody").innerHTML=imageBlock+sizes+topping+`<div class="option-summary"><b>Tạm tính</b><span class="option-price">${money(total)}</span></div>`;
+document.getElementById("optionAdd").textContent=`Thêm vào giỏ · ${money(total)}`}
 function pickSize(id){pickVariant=menu.find(x=>x.id===id);renderOptions()}
 function toggleTop(id,on){pickToppings=on?[...pickToppings,id]:pickToppings.filter(x=>x!==id);renderOptions()}
 function confirmOptions(){if(!pickVariant)return;let tops=pickToppings.map(id=>menu.find(x=>x.id===id)).filter(Boolean);let label=optionLabel(pickVariant);let name=picking.name+(label?` (${label})`:"")+(tops.length?` • ${tops.map(t=>t.name).join(", ")}`:"");let unitPrice=pickVariant.price+tops.reduce((a,t)=>a+t.price,0);let key=[pickVariant.id,...tops.map(t=>t.id).sort((a,b)=>a-b)].join("-");let x=cart.find(a=>a.key===key);x?x.qty++:cart.push({key,menuItemId:pickVariant.id,name,unitPrice,qty:1});setCart();closeOptions();if(counterOrdering)renderCounterCart()}
