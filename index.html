@@ -1361,6 +1361,29 @@ body.admin-mode .qrgrid{
   }
 }
 </style>
+<style id="unno-v491-image-contain">
+/* ===== UnNo Tea V4.9.1: ảnh popup nhìn bao quát toàn món ===== */
+.option-product-image{
+  height:260px!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  padding:8px;
+  background:#f7f4ee!important;
+}
+@media(max-width:760px){
+  body:not(.admin-mode) .option-product-image{
+    height:210px!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    padding:6px;
+  }
+}
+@media(max-width:380px){
+  body:not(.admin-mode) .option-product-image{
+    height:185px!important;
+  }
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
