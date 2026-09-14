@@ -1171,22 +1171,18 @@ body.admin-mode .qrgrid{
   body:not(.admin-mode) .cart .cart-actions button{padding:6px 7px!important;font-size:9.5px!important}
 }
 </style>
-<style id="unno-v48-mobile-compact">
-/* ===== UnNo Tea V4.8: Mobile COMPACT — ưu tiên thao tác order ===== */
+<style id="unno-v481-mobile-compact-fix">
+/* ===== UnNo Tea V4.8.1 FIX: mobile compact, không đụng JS ===== */
 @media(max-width:760px){
   body:not(.admin-mode) main#customer{padding:6px 7px 94px!important}
-
-  /* Bỏ khối giới thiệu lớn trên mobile: header đã đủ nhận diện */
   body:not(.admin-mode) .hero{display:none!important}
 
-  /* Header chỉ còn 1 hàng gọn */
   body:not(.admin-mode) header .nav{min-height:52px!important;padding:6px 8px!important}
   body:not(.admin-mode) header .logo{width:36px!important;height:36px!important}
   body:not(.admin-mode) header .brand{font-size:14px!important}
   body:not(.admin-mode) #headSub{font-size:9px!important}
   body:not(.admin-mode) #table{font-size:10px!important;padding:6px 8px!important}
 
-  /* Search + category sát nhau, ít chiếm chiều cao */
   body:not(.admin-mode) .customer-tools{
     top:52px!important;
     padding:4px 0!important;
@@ -1199,6 +1195,7 @@ body.admin-mode .qrgrid{
     border-radius:10px!important;
   }
   body:not(.admin-mode) .search-icon{left:11px!important;font-size:14px!important}
+
   body:not(.admin-mode) #cats{
     top:98px!important;
     padding:2px 7px 5px!important;
@@ -1211,7 +1208,6 @@ body.admin-mode .qrgrid{
     font-size:10px!important;
   }
 
-  /* Card cực gọn: ảnh nhỏ phía trên, thông tin ngay bên dưới */
   body:not(.admin-mode) #menu.grid{
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
     gap:6px!important;
@@ -1225,9 +1221,7 @@ body.admin-mode .qrgrid{
     height:auto!important;
     object-fit:cover!important;
   }
-  body:not(.admin-mode) #menu .body{
-    padding:6px!important;
-  }
+  body:not(.admin-mode) #menu .body{padding:6px!important}
   body:not(.admin-mode) #menu .name{
     min-height:27px!important;
     font-size:11px!important;
@@ -1243,18 +1237,20 @@ body.admin-mode .qrgrid{
     line-height:1.1!important;
   }
   body:not(.admin-mode) #menu .add{
-    width:29px!important;height:29px!important;min-width:29px!important;
+    width:29px!important;
+    height:29px!important;
+    min-width:29px!important;
     border-radius:8px!important;
   }
   body:not(.admin-mode) #menu .add::after{font-size:17px!important}
 
-  /* Thanh giỏ dưới cùng: 1 nút chính nổi bật, Đơn của tôi nhỏ hơn */
   body:not(.admin-mode) .cart{
     min-height:48px!important;
     padding:6px 7px!important;
     border-radius:13px!important;
     bottom:5px!important;
-    left:5px!important;right:5px!important;
+    left:5px!important;
+    right:5px!important;
   }
   body:not(.admin-mode) .cart .cart-main{
     font-size:10px!important;
@@ -1266,7 +1262,6 @@ body.admin-mode .qrgrid{
     font-size:9.5px!important;
   }
 
-  /* Online: form ban đầu gọn hơn */
   body:not(.admin-mode) #remoteOrderBox{
     padding:8px!important;
     margin-bottom:5px!important;
@@ -1274,19 +1269,33 @@ body.admin-mode .qrgrid{
   body:not(.admin-mode) #remoteOrderBox h3{font-size:13px!important}
   body:not(.admin-mode) #remoteOrderBox>.small{display:none!important}
   body:not(.admin-mode) .order-mode{margin:5px 0!important}
-  body:not(.admin-mode) .modebtn{min-height:36px!important;font-size:10.5px!important;padding:6px!important}
+  body:not(.admin-mode) .modebtn{
+    min-height:36px!important;
+    font-size:10.5px!important;
+    padding:6px!important;
+  }
   body:not(.admin-mode) .delivery-grid{gap:4px!important}
-  body:not(.admin-mode) .delivery-grid input{min-height:37px!important;padding:7px 9px!important;font-size:11.5px!important}
+  body:not(.admin-mode) .delivery-grid input{
+    min-height:37px!important;
+    padding:7px 9px!important;
+    font-size:11.5px!important;
+  }
 
-  /* Bottom sheet: nút hành động luôn rõ */
-  body:not(.admin-mode) .modal .sheet{max-height:92vh!important;padding:9px 10px 13px!important}
+  body:not(.admin-mode) .modal .sheet{
+    max-height:92vh!important;
+    padding:9px 10px 13px!important;
+  }
   body:not(.admin-mode) .sheethead h2{font-size:16px!important}
-  body:not(.admin-mode) .option-btn{min-height:40px!important;font-size:11px!important}
+  body:not(.admin-mode) .option-btn{
+    min-height:40px!important;
+    font-size:11px!important;
+  }
   body:not(.admin-mode) #optionConfirm,
-  body:not(.admin-mode) #placeOrderBtn{min-height:45px!important;font-size:12.5px!important}
+  body:not(.admin-mode) #placeOrderBtn{
+    min-height:45px!important;
+    font-size:12.5px!important;
+  }
 }
-
-/* Điện thoại rất hẹp vẫn giữ 2 cột nhưng không chật chữ */
 @media(max-width:360px){
   body:not(.admin-mode) #menu.grid{gap:5px!important}
   body:not(.admin-mode) #menu .pic{aspect-ratio:1.35!important}
@@ -1780,34 +1789,7 @@ async function printBill(id){
   <div class="dash"></div>
   <div class="c">Cảm ơn quý khách ❤️<br>UnNo Tea</div>
   <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script>
-  
-<script id="unno-v48-mobile-helper">
-(function(){
-  function mobileCartState(){
-    if(innerWidth>760)return;
-    const bar=document.getElementById("cartBar");
-    const count=document.getElementById("count");
-    if(!bar||!count)return;
-    const empty=(parseInt(count.textContent||"0",10)||0)===0;
-    bar.classList.toggle("empty-mobile-cart",empty);
-  }
-  const obs=new MutationObserver(mobileCartState);
-  addEventListener("DOMContentLoaded",()=>{
-    const c=document.getElementById("count");
-    if(c)obs.observe(c,{childList:true,subtree:true,characterData:true});
-    mobileCartState();
-  });
-  addEventListener("resize",mobileCartState);
-})();
-</script>
-<style>
-@media(max-width:760px){
- body:not(.admin-mode) .cart.empty-mobile-cart .cart-main{opacity:.72}
- body:not(.admin-mode) .cart.empty-mobile-cart{background:#202020}
-}
-</style>
-
-</body></html>`);
+  </body></html>`);
   w.document.close();
 }
 
