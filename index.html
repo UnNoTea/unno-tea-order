@@ -1458,6 +1458,31 @@ body.admin-mode .qrgrid{
 }
 </style>
 
+
+<style id="unno-bulk-stock-v1">
+.bulk-stock-bar{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:10px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--line)
+}
+.bulk-stock-bar button{
+  border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:9px 11px;font-weight:800
+}
+.bulk-stock-bar .danger{background:#b42318;color:#fff;border-color:#b42318}
+.bulk-stock-bar .ok{background:#176b3b;color:#fff;border-color:#176b3b}
+.bulk-stock-count{font-size:12px;color:var(--muted);margin-left:auto}
+.menu-select-row{
+  display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;
+  align-items:center;padding:10px 0;border-bottom:1px solid var(--line)
+}
+.menu-select-row input[type="checkbox"]{width:18px;height:18px}
+@media(max-width:600px){
+  .bulk-stock-count{width:100%;margin-left:0}
+  .menu-select-row{grid-template-columns:auto 1fr auto}
+  .menu-select-row .delete-btn{grid-column:2/-1;justify-self:end}
+}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1972,8 +1997,31 @@ async function printBill(id){
 
 async function advance(id,status){let {error}=await sb.from("orders").update({status}).eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
 async function delOrder(id){if(!confirm("Xóa đơn này?"))return;let {error}=await sb.from("orders").delete().eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
-function renderManage(){document.getElementById("adminView").innerHTML=`<div class="panel"><h2>Thêm món</h2><div class="formgrid"><input id="mn" placeholder="Tên món"><input id="mp" type="number" placeholder="Giá"><input id="mc" placeholder="Danh mục"><input id="mi" placeholder="URL ảnh"><input id="md" class="wide" placeholder="Mô tả"><input id="ms" type="number" value="0" placeholder="Thứ tự"><button class="primary wide" onclick="addMenu()">Thêm món</button></div></div><div class="panel" style="margin-top:12px"><h2>Menu hiện tại</h2><div id="menulist">Đang tải...</div></div>`;loadManage()}
-async function loadManage(){let {data,error}=await sb.from("menu_items").select("*").order("sort_order").order("name");if(error)return;document.getElementById("menulist").innerHTML=(data||[]).map(m=>`<div class="listrow"><div><b>${esc(m.name)}</b><div class="small">${esc(m.category)} • ${money(m.price)} • ${m.is_available?"Đang bán":"Tắt"}</div></div><button onclick="toggleItem(${m.id},${!m.is_available})">${m.is_available?"Tắt":"Bật"}</button><button onclick="delItem(${m.id})">Xóa</button></div>`).join("")}
+function renderManage(){document.getElementById("adminView").innerHTML=`<div class="panel"><h2>Thêm món</h2><div class="formgrid"><input id="mn" placeholder="Tên món"><input id="mp" type="number" placeholder="Giá"><input id="mc" placeholder="Danh mục"><input id="mi" placeholder="URL ảnh"><input id="md" class="wide" placeholder="Mô tả"><input id="ms" type="number" value="0" placeholder="Thứ tự"><button class="primary wide" onclick="addMenu()">Thêm món</button></div></div><div class="panel" style="margin-top:12px"><h2>Menu hiện tại</h2><div class="bulk-stock-bar"><button onclick="selectAllMenuItems(true)">☑ Chọn tất cả</button><button onclick="selectAllMenuItems(false)">Bỏ chọn</button><button class="danger" onclick="bulkSetAvailability(false)">Hết hàng đã chọn</button><button class="ok" onclick="bulkSetAvailability(true)">Bán lại đã chọn</button><span id="bulkStockCount" class="bulk-stock-count">Đã chọn 0 món</span></div><div id="menulist">Đang tải...</div></div>`;loadManage()}
+async function loadManage(){let {data,error}=await sb.from("menu_items").select("*").order("sort_order").order("name");if(error)return;document.getElementById("menulist").innerHTML=(data||[]).map(m=>`<div class="menu-select-row"><input class="menu-bulk-check" type="checkbox" value="${m.id}" onchange="updateBulkStockCount()"><div><b>${esc(m.name)}</b><div class="small">${esc(m.category)} • ${money(m.price)} • ${m.is_available?"Đang bán":"Hết hàng"}</div></div><button onclick="toggleItem(${m.id},${!m.is_available})">${m.is_available?"Hết hàng":"Bán lại"}</button><button class="delete-btn" onclick="delItem(${m.id})">Xóa</button></div>`).join("");updateBulkStockCount()}
+
+function getSelectedMenuIds(){
+  return [...document.querySelectorAll(".menu-bulk-check:checked")].map(x=>Number(x.value)).filter(Boolean);
+}
+function updateBulkStockCount(){
+  const el=document.getElementById("bulkStockCount");
+  if(el)el.textContent=`Đã chọn ${getSelectedMenuIds().length} món`;
+}
+function selectAllMenuItems(on){
+  document.querySelectorAll(".menu-bulk-check").forEach(x=>x.checked=on);
+  updateBulkStockCount();
+}
+async function bulkSetAvailability(on){
+  const ids=getSelectedMenuIds();
+  if(!ids.length)return alert("Bạn chưa chọn món nào.");
+  const msg=on?`Bật bán lại ${ids.length} món đã chọn?`:`Đánh dấu HẾT HÀNG cho ${ids.length} món đã chọn?`;
+  if(!confirm(msg))return;
+  const {error}=await sb.from("menu_items").update({is_available:on}).in("id",ids);
+  if(error)return alert(error.message);
+  await loadManage();
+  await loadMenu();
+}
+
 async function addMenu(){let name=mn.value.trim(),price=+mp.value,category=mc.value.trim();if(!name||!price||!category)return alert("Cần tên, giá và danh mục.");let {error}=await sb.from("menu_items").insert({name,price,category,image_url:mi.value.trim()||"logo.jpg",description:md.value.trim(),sort_order:+ms.value||0,is_available:true});if(error)alert(error.message);else renderManage()}
 async function toggleItem(id,on){await sb.from("menu_items").update({is_available:on}).eq("id",id);loadManage();loadMenu()}
 async function delItem(id){if(!confirm("Xóa món?"))return;await sb.from("menu_items").delete().eq("id",id);loadManage();loadMenu()}
