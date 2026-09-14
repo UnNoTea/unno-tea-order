@@ -1441,6 +1441,23 @@ body.admin-mode .qrgrid{
   .customer-status-icon{animation:none!important}
 }
 </style>
+
+<style id="unno-qr-display-fix">
+.qr .qrimg{
+  display:block;
+  width:170px;
+  height:170px;
+  max-width:100%;
+  object-fit:contain;
+  margin:14px auto 12px;
+  background:#fff;
+  border-radius:8px;
+}
+@media(max-width:600px){
+  .qr .qrimg{width:150px;height:150px}
+}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2143,20 +2160,29 @@ function downloadStatsCSV(){
 function renderQR(){
   let base="https://unno-tea-order.vercel.app/";
   let online="https://unno-tea-order.vercel.app/online";
+  const makeQr=url=>"https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data="+encodeURIComponent(url);
   document.getElementById("adminView").innerHTML=`
   <div class="panel">
     <h2>Link đặt hàng online</h2>
     <p class="small">Chỉ cần gửi 1 link cho khách. Khách tự chọn Giao tận nơi hoặc Tự đến lấy.</p>
     <div class="sharebox"><b>🔗 Link đặt món UnNo Tea</b><div class="shareline"><input id="onlineLink" readonly value="${esc(online)}"><button onclick="copyLink('onlineLink')">Sao chép</button></div></div>
   </div>
-  <div class="panel" style="margin-top:12px"><h2>QR từng bàn</h2><p class="small">In từng QR và dán lên bàn.</p><div class="qrgrid">${Array.from({length:30},(_,i)=>i+1).map(n=>`<div class="qr"><b>Bàn ${n}</b><canvas id="q${n}"></canvas><button class="tab" onclick="printQR(${n})">In QR</button></div>`).join("")}</div></div>`;
-  for(let n=1;n<=30;n++)QRCode.toCanvas(document.getElementById("q"+n),base+"?table="+n,{width:150,margin:1})
+  <div class="panel" style="margin-top:12px"><h2>QR từng bàn</h2><p class="small">In từng QR và dán lên bàn.</p><div class="qrgrid">${Array.from({length:30},(_,i)=>i+1).map(n=>{
+    const url=base+"?table="+n;
+    return `<div class="qr"><b>Bàn ${n}</b><img class="qrimg" src="${makeQr(url)}" alt="QR Bàn ${n}" loading="lazy"><button class="tab" onclick="printQR(${n})">In QR</button></div>`;
+  }).join("")}</div></div>`;
 }
 function copyLink(id){
   const el=document.getElementById(id);el.select();el.setSelectionRange(0,99999);
   navigator.clipboard?.writeText(el.value).then(()=>alert("Đã sao chép link!")).catch(()=>{document.execCommand("copy");alert("Đã sao chép link!")})
 }
-function printQR(n){let url="https://unno-tea-order.vercel.app/?table="+n;let w=open("","_blank");w.document.write(`<html><body style="text-align:center;font-family:Arial"><h1>UnNo Tea</h1><h2>BÀN ${n}</h2><canvas id="c"></canvas><p>Quét QR để gọi món</p><script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script><script>QRCode.toCanvas(document.getElementById('c'),'${url}',{width:350},()=>setTimeout(()=>print(),300))<\/script></body></html>`);w.document.close()}
+function printQR(n){
+  const url="https://unno-tea-order.vercel.app/?table="+n;
+  const qr="https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data="+encodeURIComponent(url);
+  const w=open("","_blank");
+  w.document.write(`<html><head><title>QR Bàn ${n} - UnNo Tea</title></head><body style="text-align:center;font-family:Arial;padding:20px"><h1 style="margin-bottom:4px">UnNo Tea</h1><h2 style="margin-top:0">BÀN ${n}</h2><img src="${qr}" style="width:350px;max-width:90vw" onload="setTimeout(()=>window.print(),400)"><p>Quét QR để gọi món</p></body></html>`);
+  w.document.close();
+}
 document.getElementById("optionModal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeOptions()});
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeCart()});
 document.getElementById("ordersModal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeMyOrders()});
