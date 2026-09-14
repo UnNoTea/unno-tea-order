@@ -2168,7 +2168,7 @@ if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:
 setInterval(()=>{
   const om=document.getElementById("ordersModal");
   if(om&&om.classList.contains("open")&&sb)loadMyOrders();
-},1000);
+},5000);
 
 // Dự phòng nếu Realtime bị ngắt: vẫn kiểm tra đơn mới dù đang ở Order tại quầy/Món & giá/QR/Thống kê.
 setInterval(()=>{
