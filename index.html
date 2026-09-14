@@ -1384,6 +1384,63 @@ body.admin-mode .qrgrid{
   }
 }
 </style>
+<style id="unno-v493-order-status-animation">
+/* ===== UnNo Tea V4.9.3: trạng thái đơn có icon chuyển động ===== */
+.customer-status-box{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:10px 0 8px;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#faf9f6;
+}
+.customer-status-icon{
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:29px;
+  line-height:1;
+}
+.customer-status-title{font-weight:900;font-size:14px}
+.customer-status-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.status-new .customer-status-icon{animation:unnoPulse 1.15s ease-in-out infinite}
+.status-making .customer-status-icon{animation:unnoCook .75s ease-in-out infinite alternate;transform-origin:50% 80%}
+.status-done .customer-status-icon{animation:unnoDone 1.1s ease-in-out infinite}
+@keyframes unnoPulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.17) rotate(-5deg)}
+}
+@keyframes unnoCook{
+  from{transform:rotate(-9deg) translateY(1px)}
+  to{transform:rotate(9deg) translateY(-2px)}
+}
+@keyframes unnoDone{
+  0%,100%{transform:scale(1)}
+  45%{transform:scale(1.18)}
+  65%{transform:scale(.96)}
+}
+@media(max-width:760px){
+  body:not(.admin-mode) .customer-status-box{
+    gap:9px;
+    margin:8px 0 7px;
+    padding:8px 9px;
+    border-radius:11px;
+  }
+  body:not(.admin-mode) .customer-status-icon{
+    width:36px;height:36px;flex-basis:36px;font-size:25px;
+  }
+  body:not(.admin-mode) .customer-status-title{font-size:12px}
+  body:not(.admin-mode) .customer-status-sub{font-size:9.5px}
+}
+@media (prefers-reduced-motion: reduce){
+  .customer-status-icon{animation:none!important}
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1609,6 +1666,11 @@ function closeMyOrders(){
   document.body.style.overflow="";
 }
 function statusIndex(s){return s==="Hoàn thành"?3:s==="Đang làm"?2:1}
+function customerStatusVisual(s){
+  if(s==="Hoàn thành")return {cls:"status-done",icon:"✅",title:"Đơn đã hoàn thành",sub:"Món của bạn đã sẵn sàng. Cảm ơn bạn!"};
+  if(s==="Đang làm")return {cls:"status-making",icon:"👨‍🍳",title:"Quán đang làm món",sub:"Món đang được chuẩn bị, bạn chờ một chút nhé."};
+  return {cls:"status-new",icon:"📩",title:"Quán đã nhận đơn",sub:"Đơn đã được gửi tới quán và đang chờ xử lý."};
+}
 function customerOrderLabel(o){
   return o.table_number==="GIAO HÀNG"?"🚚 Giao hàng":o.table_number==="MANG VỀ"?"🥡 Mang về":o.table_number==="TẠI QUẦY"?"🧾 Tại quầy":"🪑 Bàn "+esc(o.table_number);
 }
@@ -1628,18 +1690,30 @@ async function loadMyOrders(){
     box.innerHTML='<div class="notice">Chưa đọc được trạng thái đơn. Nếu vừa nâng cấp website, hãy chạy file SQL theo dõi đơn trong Supabase.</div>';
     return;
   }
+  /* Chỉ giữ và hiển thị 1 đơn gần nhất trên máy khách.
+     Nếu đơn gần nhất đã hoàn thành, vẫn giữ lại để khách nhìn thấy trạng thái.
+     Khi khách đặt đơn mới, đơn mới sẽ tự thay thế đơn cũ. */
   results.sort((a,b)=>Number(b.id)-Number(a.id));
-  box.innerHTML=results.map(o=>{
-    const idx=statusIndex(o.status);
-    const total=(o.items||[]).reduce((a,i)=>a+Number(i.price||0)*Number(i.quantity||0),0);
-    return `<div class="myorder">
+  const latest=results[0];
+  const latestTracked=getTrackedOrders().find(t=>String(t.id)===String(latest.id));
+  if(latestTracked){
+    localStorage.setItem(trackedKey,JSON.stringify([latestTracked]));
+  }
+  const o=latest;
+  const idx=statusIndex(o.status);
+  const sv=customerStatusVisual(o.status);
+  const total=(o.items||[]).reduce((a,i)=>a+Number(i.price||0)*Number(i.quantity||0),0);
+  box.innerHTML=`<div class="myorder">
       <div class="myorder-head"><div><b>${customerOrderLabel(o)}</b><div class="small">Mã #${esc(o.id)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div></div><b>${esc(o.status)}</b></div>
+      <div class="customer-status-box ${sv.cls}">
+        <div class="customer-status-icon">${sv.icon}</div>
+        <div><div class="customer-status-title">${sv.title}</div><div class="customer-status-sub">${sv.sub}</div></div>
+      </div>
       <div class="progress"><div class="progress-step ${idx>=1?'on':''}"></div><div class="progress-step ${idx>=2?'on':''}"></div><div class="progress-step ${idx>=3?'on':''}"></div></div>
       <div class="progress-labels"><span>Đã gửi</span><span>Đang làm</span><span>Hoàn thành</span></div>
       <ul class="myorder-items">${(o.items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity} — ${money(Number(i.price||0)*Number(i.quantity||0))}</li>`).join("")}</ul>
       <div class="row"><span class="small">${o.note?esc(o.note).replace(/\n/g,"<br>"):""}</span><b>${money(total)}</b></div>
     </div>`;
-  }).join("");
 }
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
@@ -2094,7 +2168,7 @@ if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:
 setInterval(()=>{
   const om=document.getElementById("ordersModal");
   if(om&&om.classList.contains("open")&&sb)loadMyOrders();
-},3500);
+},1000);
 
 // Dự phòng nếu Realtime bị ngắt: vẫn kiểm tra đơn mới dù đang ở Order tại quầy/Món & giá/QR/Thống kê.
 setInterval(()=>{
