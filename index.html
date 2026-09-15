@@ -1499,6 +1499,125 @@ body.admin-mode .qrgrid{
 .counter-pay-btn{font-size:16px;padding:13px!important}
 </style>
 
+
+<style id="unno-pos-compact-v2">
+/* Quầy POS: giữ toàn bộ vùng thanh toán gọn trong màn hình desktop */
+body.admin-mode.counter-view .counter-cart{
+  position:sticky;top:88px;
+  max-height:calc(100vh - 102px);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+body.admin-mode.counter-view #counterCartItems{
+  flex:1 1 auto;
+  min-height:64px;
+  max-height:220px;
+  overflow:auto;
+}
+body.admin-mode.counter-view .counter-cart-form{flex:0 0 auto}
+body.admin-mode.counter-view .counter-note{
+  min-height:46px!important;height:46px!important;
+  padding:8px 10px!important;
+}
+body.admin-mode.counter-view .total{padding:8px 0!important;margin:0!important}
+body.admin-mode.counter-view .payment-box{
+  margin-top:5px!important;padding:8px!important;border-radius:11px!important
+}
+body.admin-mode.counter-view .payment-title{margin-bottom:5px!important;font-size:14px}
+body.admin-mode.counter-view .payment-methods{gap:6px}
+body.admin-mode.counter-view .pay-method{padding:8px 5px!important;font-size:13px}
+body.admin-mode.counter-view .cash-box{margin-top:6px!important;gap:4px!important}
+body.admin-mode.counter-view .cash-box label{font-size:12px}
+body.admin-mode.counter-view .cash-box input{padding:8px 9px!important;font-size:14px!important}
+body.admin-mode.counter-view .change-row{font-size:13px;padding-top:2px!important}
+body.admin-mode.counter-view .counter-pay-btn{
+  margin-top:7px!important;padding:10px!important;font-size:14px!important
+}
+/* QR tại quầy nhỏ gọn, vẫn đủ lớn để khách quét */
+body.admin-mode.counter-view .transfer-preview{
+  margin-top:6px!important;padding:6px!important
+}
+body.admin-mode.counter-view .transfer-preview img{
+  width:132px!important;margin:4px auto!important
+}
+body.admin-mode.counter-view .transfer-preview .bank-line{
+  font-size:11px!important;line-height:1.25!important
+}
+@media(max-width:900px){
+  body.admin-mode.counter-view .counter-cart{
+    position:static;max-height:none;overflow:visible
+  }
+  body.admin-mode.counter-view #counterCartItems{max-height:none}
+}
+</style>
+
+
+<style id="unno-option-popup-no-scroll-v2">
+/* Popup chọn món trên máy tính/quầy: nút thêm giỏ luôn nhìn thấy */
+@media(min-width:761px){
+  #optionModal .sheet{
+    width:min(660px,calc(100vw - 32px))!important;
+    max-height:calc(100vh - 24px)!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  #optionModal .sheethead{flex:0 0 auto}
+  #optionModal #optionBody{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    padding-bottom:8px!important;
+  }
+  #optionModal .option-product-image{
+    height:120px!important;
+    max-height:120px!important;
+    object-fit:contain!important;
+  }
+  #optionModal .option-product-image-wrap{
+    flex:0 0 auto;
+    margin-bottom:6px!important;
+  }
+  #optionModal #optionAdd{
+    flex:0 0 auto!important;
+    position:sticky!important;
+    bottom:0!important;
+    z-index:30!important;
+    width:100%!important;
+    margin:8px 0 0!important;
+    padding:12px!important;
+    box-shadow:0 -8px 18px rgba(255,255,255,.96);
+  }
+  #optionModal .option-summary{
+    margin-top:8px!important;
+    padding:10px 14px!important;
+  }
+  #optionModal h3{margin:12px 0 8px!important}
+  #optionModal .optrow{padding:8px 10px!important}
+}
+/* Điện thoại: nút cũng cố định ở đáy popup */
+@media(max-width:760px){
+  #optionModal .sheet{
+    max-height:calc(100dvh - 8px)!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  #optionModal #optionBody{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+  }
+  #optionModal #optionAdd{
+    flex:0 0 auto!important;
+    position:sticky!important;
+    bottom:0!important;
+    z-index:30!important;
+    margin-top:6px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1614,7 +1733,24 @@ function setCart(){
   }
   if(c){bar.style.animation="none";requestAnimationFrame(()=>{bar.style.animation=""})}
 }
-async function loadMenu(){if(!sb){menu=demo;normalizeCart();renderCats();renderMenu();setCart();return}let {data,error}=await sb.from("menu_items").select("*").eq("is_available",true).order("sort_order").order("name");if(error){menu=demo;showErr(error.message)}else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||""}));normalizeCart();renderCats();renderMenu();setCart();}
+async function loadMenu(){
+  if(!sb){
+    menu=demo;
+    normalizeCart();renderCats();renderMenu();setCart();
+    if(adminView==="counter" && document.getElementById("dash")?.style.display==="block")renderCounter();
+    return;
+  }
+  let {data,error}=await sb.from("menu_items").select("*").eq("is_available",true).order("sort_order").order("name");
+  if(error){menu=demo;showErr(error.message)}
+  else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||""}));
+  normalizeCart();renderCats();renderMenu();setCart();
+
+  // Khi F5 trang Admin, adminUI có thể dựng "Order tại quầy" trước khi Supabase tải menu xong.
+  // Tự render lại ngay khi menu đã tải, không cần nhân viên bấm lại tab.
+  if(adminView==="counter" && document.getElementById("dash")?.style.display==="block"){
+    renderCounter();
+  }
+}
 const demo=[{id:1,name:"Trà sữa UnNo",cat:"Trà sữa",price:35000,img:"logo.jpg",desc:"Món mẫu — hãy thay bằng menu của quán."},{id:2,name:"Trà đào cam sả",cat:"Trà trái cây",price:32000,img:"logo.jpg",desc:"Thanh mát, thơm đào và cam."},{id:3,name:"Matcha latte",cat:"Matcha",price:39000,img:"logo.jpg",desc:"Matcha đậm vị, sữa mịn."}];
 function baseName(name){return String(name||"").replace(/ \((?:Size (?:M|L|XL)|Suất [^)]+)\)$/i,"").trim()}
 function optionLabel(m){let x=String(m.name||"").match(/ \((Size (?:M|L|XL)|Suất [^)]+)\)$/i);return x?x[1]:""}
@@ -1789,6 +1925,7 @@ async function adminUI(){
     document.getElementById("loginBox").style.display="none";
     document.getElementById("dash").style.display="block";
     if(!adminView)adminView="counter";
+    if(adminView==="counter" && (!menu || !menu.length))await loadMenu();
     const bar=document.querySelector("#dash .adminbar");
     const slot=document.getElementById("adminNavSlot");
     if(bar&&slot&&!slot.contains(bar))slot.appendChild(bar);
@@ -1854,15 +1991,6 @@ function renderCounter(){
             </div>
           </div>
           <button class="primary counter-submit counter-pay-btn" onclick="submitCounterOrder()">✅ Xác nhận thanh toán & tạo đơn</button>
-          <div class="counter-tip">
-            <b>💡 Mẹo nhanh</b>
-            <ul>
-              <li>Dùng ô tìm kiếm để tìm món nhanh hơn.</li>
-              <li>Có thể lọc theo danh mục món.</li>
-              <li>Sau khi tạo đơn, đơn sẽ hiện ở Đơn hàng và Bếp.</li>
-              <li>In hóa đơn từ trang Đơn hàng.</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>`;
@@ -1968,10 +2096,10 @@ function adminSpeakNewOrder(){
     if(!("speechSynthesis" in window))return;
     // Không xếp hàng nhiều câu nếu nhiều tín hiệu đơn mới đến sát nhau.
     window.speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance("Bạn có đơn hàng mới");
+    const u=new SpeechSynthesisUtterance("Bạn có đơn hàng mới! Vui lòng kiểm tra đơn.");
     u.lang="vi-VN";
-    u.rate=0.95;
-    u.pitch=1;
+    u.rate=0.82;
+    u.pitch=1.06;
     u.volume=1;
     if(unnoSpeechVoice)u.voice=unnoSpeechVoice;
     window.speechSynthesis.speak(u);
@@ -1982,12 +2110,18 @@ function adminBeep(){
   try{
     audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
     if(audioCtx.state==="suspended")audioCtx.resume();
-    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.type="sine";o.frequency.setValueAtTime(880,audioCtx.currentTime);
-    g.gain.setValueAtTime(.0001,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.18,audioCtx.currentTime+.02);
-    g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.32);
-    o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.34);
+    const t=audioCtx.currentTime;
+    // Chuông 3 nốt nhẹ, rõ hơn tiếng beep cũ nhưng không chói tai.
+    [[659.25,0,.16],[783.99,.17,.18],[987.77,.36,.28]].forEach(([freq,delay,dur])=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type="sine";
+      o.frequency.setValueAtTime(freq,t+delay);
+      g.gain.setValueAtTime(.0001,t+delay);
+      g.gain.exponentialRampToValueAtTime(.13,t+delay+.018);
+      g.gain.exponentialRampToValueAtTime(.0001,t+delay+dur);
+      o.connect(g);g.connect(audioCtx.destination);
+      o.start(t+delay);o.stop(t+delay+dur+.03);
+    });
   }catch(e){}
 }
 function syncOrderTabAttention(){
@@ -2007,7 +2141,7 @@ function showNewOrderAlert(count=1){
   syncOrderTabAttention();
   document.title="🔴 Có đơn mới • UnNo Tea";
   adminBeep();
-  adminSpeakNewOrder();
+  setTimeout(adminSpeakNewOrder,720);
 }
 function dismissNewOrderAlert(){
   newOrderUnread=0;
