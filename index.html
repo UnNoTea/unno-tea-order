@@ -1812,6 +1812,34 @@ body.admin-mode.counter-view .transfer-preview .bank-line{
 }
 </style>
 
+
+<style id="unno-option-cart-overlay-fix-v3">
+@media(max-width:760px){
+  /* Khi đang chọn size/topping, giỏ Admin không được đè lên nút Thêm vào giỏ */
+  body.option-modal-open.admin-mode.counter-view .counter-cart{
+    display:none!important;
+  }
+  body.option-modal-open #optionModal{z-index:9999!important}
+  body.option-modal-open #optionModal .sheet{
+    height:calc(100dvh - 76px)!important;
+    max-height:calc(100dvh - 76px)!important;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom))!important;
+  }
+  body.option-modal-open #optionModal #optionAdd{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    position:relative!important;
+    width:calc(100% - 28px)!important;
+    min-height:52px!important;
+    margin:8px 14px 0!important;
+    z-index:10001!important;
+    background:#111!important;
+    color:#fff!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1969,8 +1997,8 @@ function renderMenu(filter="Tất cả"){
 }
 function cat(b,c){document.querySelectorAll("#cats .cat").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentCategory=c;renderMenu(c);b.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"})}
 let picking=null,pickVariant=null,pickToppings=[];
-function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;picking=g;pickVariant=g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();const modal=document.getElementById("optionModal");modal.classList.add("open");const body=document.getElementById("optionBody");if(body)body.scrollTop=0;document.body.style.overflow="hidden"}
-function closeOptions(){document.getElementById("optionModal").classList.remove("open");document.body.style.overflow=""}
+function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;picking=g;pickVariant=g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();const modal=document.getElementById("optionModal");modal.classList.add("open");document.body.classList.add("option-modal-open");const body=document.getElementById("optionBody");if(body)body.scrollTop=0;document.body.style.overflow="hidden"}
+function closeOptions(){document.getElementById("optionModal").classList.remove("open");document.body.classList.remove("option-modal-open");document.body.style.overflow=""}
 function renderOptions(){let g=picking;if(!g)return;
 let currentImg=(pickVariant&&pickVariant.img)||g.img||"logo.jpg";
 let imageBlock=`<div class="option-product-image-wrap"><img class="option-product-image" src="${esc(currentImg)}" alt="${esc(g.name)}" onerror="this.src='logo.jpg'"><div class="option-product-caption"><span class="name">${esc(g.name)}</span><span class="cat">${esc(g.cat||"")}</span></div></div>`;
