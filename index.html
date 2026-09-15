@@ -1840,6 +1840,18 @@ body.admin-mode.counter-view .transfer-preview .bank-line{
 }
 </style>
 
+
+<style id="unno-soldout-restore-v1">
+.picwrap{position:relative}
+.sold-out-card{opacity:.68;cursor:not-allowed!important}
+.sold-out-card .pic{filter:grayscale(.65)}
+.sold-out-badge{
+ position:absolute;left:8px;top:8px;z-index:5;background:#b42318;color:#fff;
+ font-size:11px;font-weight:900;padding:6px 9px;border-radius:999px;letter-spacing:.3px
+}
+.sold-out-card .add:disabled{background:#777!important;color:#fff!important;opacity:1!important;cursor:not-allowed}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1962,9 +1974,9 @@ async function loadMenu(){
     if(adminView==="counter" && document.getElementById("dash")?.style.display==="block")renderCounter();
     return;
   }
-  let {data,error}=await sb.from("menu_items").select("*").eq("is_available",true).order("sort_order").order("name");
-  if(error){menu=demo;showErr(error.message)}
-  else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||""}));
+  let {data,error}=await sb.from("menu_items").select("*").order("sort_order").order("name");
+  if(error){menu=demo.map(x=>({...x,available:true}));showErr(error.message)}
+  else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||"",available:x.is_available!==false}));
   normalizeCart();renderCats();renderMenu();setCart();
 
   // Khi F5 trang Admin, adminUI có thể dựng "Order tại quầy" trước khi Supabase tải menu xong.
@@ -1976,7 +1988,7 @@ async function loadMenu(){
 const demo=[{id:1,name:"Trà sữa UnNo",cat:"Trà sữa",price:35000,img:"logo.jpg",desc:"Món mẫu — hãy thay bằng menu của quán."},{id:2,name:"Trà đào cam sả",cat:"Trà trái cây",price:32000,img:"logo.jpg",desc:"Thanh mát, thơm đào và cam."},{id:3,name:"Matcha latte",cat:"Matcha",price:39000,img:"logo.jpg",desc:"Matcha đậm vị, sữa mịn."}];
 function baseName(name){return String(name||"").replace(/ \((?:Size (?:M|L|XL)|Suất [^)]+)\)$/i,"").trim()}
 function optionLabel(m){let x=String(m.name||"").match(/ \((Size (?:M|L|XL)|Suất [^)]+)\)$/i);return x?x[1]:""}
-function groupedMenu(){let groups=[];let map=new Map();for(let m of menu){if(m.cat==="Topping"||m.cat==="Topping thêm")continue;let key=m.cat+"||"+baseName(m.name);if(!map.has(key)){let g={key,name:baseName(m.name),cat:m.cat,img:m.img,desc:m.desc,variants:[]};map.set(key,g);groups.push(g)}map.get(key).variants.push(m)}return groups}
+function groupedMenu(){let groups=[];let map=new Map();for(let m of menu){if(m.cat==="Topping"||m.cat==="Topping thêm")continue;let key=m.cat+"||"+baseName(m.name);if(!map.has(key)){let g={key,name:baseName(m.name),cat:m.cat,img:m.img,desc:m.desc,variants:[]};map.set(key,g);groups.push(g)}map.get(key).variants.push(m)}for(const g of groups){g.availableVariants=g.variants.filter(v=>v.available!==false);g.soldOut=g.availableVariants.length===0}return groups}
 function renderCats(){let cats=["Tất cả",...new Set(menu.filter(x=>x.cat!=="Topping"&&x.cat!=="Topping thêm").map(x=>x.cat))];let box=document.getElementById("cats");box.innerHTML=cats.map((c,i)=>`<button type="button" class="cat ${i?'':'active'}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");box.querySelectorAll(".cat").forEach(b=>b.addEventListener("click",()=>cat(b,b.dataset.cat)))}
 function searchText(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim()}
 function groupMatches(g,q){
@@ -1986,23 +1998,21 @@ function groupMatches(g,q){
 }
 function applyCustomerFilters(){renderMenu(currentCategory)}
 function renderMenu(filter="Tất cả"){
- currentCategory=filter||"Tất cả";
- let d=groupedMenu();
+ currentCategory=filter||"Tất cả";let d=groupedMenu();
  if(currentCategory!=="Tất cả")d=d.filter(x=>x.cat===currentCategory);
- const q=document.getElementById("menuSearch")?.value||"";
- if(q)d=d.filter(g=>groupMatches(g,q));
+ const q=document.getElementById("menuSearch")?.value||"";if(q)d=d.filter(g=>groupMatches(g,q));
  const box=document.getElementById("menu");
- box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;let drink=isDrinkCat(g.cat);return `<article class="card" data-key="${encodeURIComponent(g.key)}" tabindex="0"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc|| (multi?"Chọn size khi thêm món":""))}</div>${drink?'<div class="drink-note">Đồ uống đã bao gồm topping</div>':''}<div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button type="button" class="add">+ Chọn món</button></div></div></article>`}).join("")||'<div class="empty">Không tìm thấy món phù hợp.</div>';
- box.querySelectorAll(".card").forEach(card=>{let go=()=>openOptions(decodeURIComponent(card.dataset.key));card.addEventListener("click",e=>{if(e.target.closest("button"))e.stopPropagation();go()});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})});
+ box.innerHTML=d.map(g=>{let priced=g.availableVariants?.length?g.availableVariants:g.variants;let min=Math.min(...priced.map(v=>+v.price));let multi=g.variants.length>1;let drink=isDrinkCat(g.cat);return `<article class="card ${g.soldOut?'sold-out-card':''}" data-key="${encodeURIComponent(g.key)}" tabindex="${g.soldOut?'-1':'0'}"><div class="picwrap"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'">${g.soldOut?'<span class="sold-out-badge">HẾT HÀNG</span>':''}</div><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${g.soldOut?'Tạm hết hàng':esc(g.desc||(multi?"Chọn size khi thêm món":""))}</div>${drink&&!g.soldOut?'<div class="drink-note">Đồ uống đã bao gồm topping</div>':''}<div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button type="button" class="add" ${g.soldOut?'disabled':''}>${g.soldOut?'Hết hàng':'+ Chọn món'}</button></div></div></article>`}).join("")||'<div class="empty">Không tìm thấy món phù hợp.</div>';
+ box.querySelectorAll(".card:not(.sold-out-card)").forEach(card=>{let go=()=>openOptions(decodeURIComponent(card.dataset.key));card.addEventListener("click",e=>{if(e.target.closest("button"))e.stopPropagation();go()});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})});
 }
 function cat(b,c){document.querySelectorAll("#cats .cat").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentCategory=c;renderMenu(c);b.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"})}
 let picking=null,pickVariant=null,pickToppings=[];
-function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;picking=g;pickVariant=g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();const modal=document.getElementById("optionModal");modal.classList.add("open");document.body.classList.add("option-modal-open");const body=document.getElementById("optionBody");if(body)body.scrollTop=0;document.body.style.overflow="hidden"}
+function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g||g.soldOut)return;picking=g;pickVariant=(g.availableVariants&&g.availableVariants[0])||g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();const modal=document.getElementById("optionModal");modal.classList.add("open");document.body.classList.add("option-modal-open");const body=document.getElementById("optionBody");if(body)body.scrollTop=0;document.body.style.overflow="hidden"}
 function closeOptions(){document.getElementById("optionModal").classList.remove("open");document.body.classList.remove("option-modal-open");document.body.style.overflow=""}
 function renderOptions(){let g=picking;if(!g)return;
 let currentImg=(pickVariant&&pickVariant.img)||g.img||"logo.jpg";
 let imageBlock=`<div class="option-product-image-wrap"><img class="option-product-image" src="${esc(currentImg)}" alt="${esc(g.name)}" onerror="this.src='logo.jpg'"><div class="option-product-caption"><span class="name">${esc(g.name)}</span><span class="cat">${esc(g.cat||"")}</span></div></div>`;
-let sizes=g.variants.length>1?`<h3>Chọn size / loại</h3><div class="choice">${g.variants.map(v=>`<button type="button" class="${pickVariant&&pickVariant.id===v.id?'active':''}" onclick="pickSize(${v.id})">${esc(optionLabel(v)||v.name)} · ${money(v.price)}</button>`).join("")}</div>`:`<div class="option-summary"><b>${esc(optionLabel(pickVariant)||'Giá món')}</b><span class="option-price">${money(pickVariant?.price||0)}</span></div>`;
+let sizes=g.variants.length>1?`<h3>Chọn size / loại</h3><div class="choice">${g.availableVariants.map(v=>`<button type="button" class="${pickVariant&&pickVariant.id===v.id?'active':''}" onclick="pickSize(${v.id})">${esc(optionLabel(v)||v.name)} · ${money(v.price)}</button>`).join("")}</div>`:`<div class="option-summary"><b>${esc(optionLabel(pickVariant)||'Giá món')}</b><span class="option-price">${money(pickVariant?.price||0)}</span></div>`;
 let tops=isDrinkCat(g.cat)?menu.filter(x=>x.cat==="Topping"):g.cat==="Mì cay – Nem nướng"?menu.filter(x=>x.cat==="Topping thêm"):[];
 let topping=tops.length?`<h3>${isDrinkCat(g.cat)?'Chọn topping':'Topping thêm'}</h3>${isDrinkCat(g.cat)?'<div class="small" style="margin:-6px 0 8px">Đồ uống đã bao gồm topping. Chọn topping bạn muốn dùng kèm.</div>':''}${tops.map(t=>`<label class="optrow"><span>${esc(t.name)} <b>+${money(t.price)}</b></span><input style="width:auto" type="checkbox" ${pickToppings.includes(t.id)?'checked':''} onchange="toggleTop(${t.id},this.checked)"></label>`).join("")}`:"";
 let total=(pickVariant?.price||0)+pickToppings.reduce((a,id)=>a+(menu.find(x=>x.id===id)?.price||0),0);
@@ -2229,12 +2239,10 @@ function setCounterCat(btn,c){
 }
 function renderCounterMenu(){
   const box=document.getElementById("counterMenu");if(!box)return;
-  let d=groupedMenu();
-  if(counterCategory!=="Tất cả")d=d.filter(x=>x.cat===counterCategory);
-  const q=document.getElementById("counterSearch")?.value||"";
-  if(q)d=d.filter(g=>groupMatches(g,q));
-  box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;return `<article class="card" data-key="${encodeURIComponent(g.key)}"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc||"")}</div><div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button class="add" type="button" aria-label="Chọn ${esc(g.name)}">+</button></div></div></article>`}).join("")||'<div class="counter-empty">Không tìm thấy món phù hợp.</div>';
-  box.querySelectorAll(".card").forEach(card=>card.addEventListener("click",()=>openOptions(decodeURIComponent(card.dataset.key))));
+  let d=groupedMenu();if(counterCategory!=="Tất cả")d=d.filter(x=>x.cat===counterCategory);
+  const q=document.getElementById("counterSearch")?.value||"";if(q)d=d.filter(g=>groupMatches(g,q));
+  box.innerHTML=d.map(g=>{let priced=g.availableVariants?.length?g.availableVariants:g.variants;let min=Math.min(...priced.map(v=>+v.price));let multi=g.variants.length>1;return `<article class="card ${g.soldOut?'sold-out-card':''}" data-key="${encodeURIComponent(g.key)}"><div class="picwrap"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'">${g.soldOut?'<span class="sold-out-badge">HẾT HÀNG</span>':''}</div><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${g.soldOut?'Tạm hết hàng':esc(g.desc||"")}</div><div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button class="add" type="button" ${g.soldOut?'disabled':''}>${g.soldOut?'Hết':'+'}</button></div></div></article>`}).join("")||'<div class="counter-empty">Không tìm thấy món phù hợp.</div>';
+  box.querySelectorAll(".card:not(.sold-out-card)").forEach(card=>card.addEventListener("click",()=>openOptions(decodeURIComponent(card.dataset.key))));
 }
 function toggleMobileCounterCart(force){
   if(window.innerWidth>760)return;
