@@ -1484,62 +1484,21 @@ body.admin-mode .qrgrid{
 </style>
 
 
-<style id="unno-soldout-v496">
-.card{position:relative}
-.soldout-badge{position:absolute;top:8px;right:8px;z-index:5;background:#b42318;color:#fff;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:950;box-shadow:0 4px 12px #0002}
-.card.soldout-card .pic{filter:grayscale(.75);opacity:.55}
-.card.soldout-card .body{opacity:.78}
-.card.soldout-card .add{background:#ddd!important;color:#777!important;pointer-events:none}
-@media(max-width:760px){body:not(.admin-mode) .soldout-badge{top:6px;right:6px;padding:5px 7px;font-size:9.5px}}
+<style id="unno-pos-payment-v1">
+.payment-box{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fafafa}
+.payment-title{font-weight:900;margin-bottom:8px}
+.payment-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay-method{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:11px 8px;font-weight:800;cursor:pointer}
+.pay-method.active{border-color:#111;background:#111;color:#fff}
+.cash-box{margin-top:10px;display:grid;gap:7px}
+.cash-box input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:16px}
+.change-row{display:flex;justify-content:space-between;font-weight:900;padding-top:4px}
+.transfer-preview{margin-top:10px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.transfer-preview img{width:210px;max-width:100%;display:block;margin:7px auto;border-radius:8px}
+.transfer-preview .bank-line{font-size:12px;line-height:1.5}
+.counter-pay-btn{font-size:16px;padding:13px!important}
 </style>
 
-<style id="unno-soldout-overlay-v497">
-.card.soldout-card{position:relative;overflow:hidden;opacity:1!important}
-.card.soldout-card .pic{filter:none!important;opacity:1!important}
-.card.soldout-card .body{opacity:1!important}
-.card.soldout-card::after{
-  content:"HẾT HÀNG";
-  position:absolute;
-  left:50%;
-  top:44%;
-  transform:translate(-50%,-50%) rotate(-8deg);
-  z-index:6;
-  padding:10px 18px;
-  border:3px solid rgba(180,35,24,.72);
-  border-radius:12px;
-  background:rgba(255,255,255,.42);
-  color:rgba(180,35,24,.88);
-  font-size:22px;
-  font-weight:950;
-  letter-spacing:1px;
-  text-shadow:0 1px 0 rgba(255,255,255,.7);
-  box-shadow:0 6px 22px rgba(0,0,0,.10);
-  backdrop-filter:blur(1.5px);
-  -webkit-backdrop-filter:blur(1.5px);
-  pointer-events:none;
-}
-.card.soldout-card::before{
-  content:"";
-  position:absolute;
-  inset:0 0 auto 0;
-  height:62%;
-  z-index:5;
-  background:rgba(255,255,255,.18);
-  pointer-events:none;
-}
-.card.soldout-card .soldout-badge{display:none!important}
-.card.soldout-card .add{background:#ddd!important;color:#777!important;pointer-events:none}
-@media(max-width:760px){
-  body:not(.admin-mode) .card.soldout-card::after{
-    top:42%;
-    padding:7px 11px;
-    border-width:2px;
-    border-radius:9px;
-    font-size:15px;
-    letter-spacing:.6px;
-  }
-}
-</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1655,7 +1614,7 @@ function setCart(){
   }
   if(c){bar.style.animation="none";requestAnimationFrame(()=>{bar.style.animation=""})}
 }
-async function loadMenu(){if(!sb){menu=demo;normalizeCart();renderCats();renderMenu();setCart();return}let {data,error}=await sb.from("menu_items").select("*").order("sort_order").order("name");if(error){menu=demo;showErr(error.message)}else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||"",available:x.is_available!==false}));normalizeCart();renderCats();renderMenu();setCart();}
+async function loadMenu(){if(!sb){menu=demo;normalizeCart();renderCats();renderMenu();setCart();return}let {data,error}=await sb.from("menu_items").select("*").eq("is_available",true).order("sort_order").order("name");if(error){menu=demo;showErr(error.message)}else menu=data.map(x=>({id:x.id,name:x.name,cat:x.category,price:x.price,img:x.image_url||"logo.jpg",desc:x.description||""}));normalizeCart();renderCats();renderMenu();setCart();}
 const demo=[{id:1,name:"Trà sữa UnNo",cat:"Trà sữa",price:35000,img:"logo.jpg",desc:"Món mẫu — hãy thay bằng menu của quán."},{id:2,name:"Trà đào cam sả",cat:"Trà trái cây",price:32000,img:"logo.jpg",desc:"Thanh mát, thơm đào và cam."},{id:3,name:"Matcha latte",cat:"Matcha",price:39000,img:"logo.jpg",desc:"Matcha đậm vị, sữa mịn."}];
 function baseName(name){return String(name||"").replace(/ \((?:Size (?:M|L|XL)|Suất [^)]+)\)$/i,"").trim()}
 function optionLabel(m){let x=String(m.name||"").match(/ \((Size (?:M|L|XL)|Suất [^)]+)\)$/i);return x?x[1]:""}
@@ -1675,12 +1634,12 @@ function renderMenu(filter="Tất cả"){
  const q=document.getElementById("menuSearch")?.value||"";
  if(q)d=d.filter(g=>groupMatches(g,q));
  const box=document.getElementById("menu");
- box.innerHTML=d.map(g=>{let availableVariants=g.variants.filter(v=>v.available!==false);let soldout=!availableVariants.length;let priced=availableVariants.length?availableVariants:g.variants;let min=Math.min(...priced.map(v=>+v.price));let multi=g.variants.length>1;let drink=isDrinkCat(g.cat);return `<article class="card ${soldout?'soldout-card':''}" data-key="${encodeURIComponent(g.key)}" tabindex="${soldout?'-1':'0'}">${soldout?'<div class="soldout-badge">HẾT HÀNG</div>':''}<img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${soldout?'Món hiện đang hết hàng':esc(g.desc|| (multi?"Chọn size khi thêm món":""))}</div>${drink&&!soldout?'<div class="drink-note">Đồ uống đã bao gồm topping</div>':''}<div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button type="button" class="add" ${soldout?'disabled':''}>${soldout?'Hết hàng':'+ Chọn món'}</button></div></div></article>`}).join("")||'<div class="empty">Không tìm thấy món phù hợp.</div>';
- box.querySelectorAll(".card:not(.soldout-card)").forEach(card=>{let go=()=>openOptions(decodeURIComponent(card.dataset.key));card.addEventListener("click",e=>{if(e.target.closest("button"))e.stopPropagation();go()});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})});
+ box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;let drink=isDrinkCat(g.cat);return `<article class="card" data-key="${encodeURIComponent(g.key)}" tabindex="0"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc|| (multi?"Chọn size khi thêm món":""))}</div>${drink?'<div class="drink-note">Đồ uống đã bao gồm topping</div>':''}<div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button type="button" class="add">+ Chọn món</button></div></div></article>`}).join("")||'<div class="empty">Không tìm thấy món phù hợp.</div>';
+ box.querySelectorAll(".card").forEach(card=>{let go=()=>openOptions(decodeURIComponent(card.dataset.key));card.addEventListener("click",e=>{if(e.target.closest("button"))e.stopPropagation();go()});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})});
 }
 function cat(b,c){document.querySelectorAll("#cats .cat").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentCategory=c;renderMenu(c);b.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"})}
 let picking=null,pickVariant=null,pickToppings=[];
-function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;let available=g.variants.filter(v=>v.available!==false);if(!available.length)return alert("Món này hiện đang hết hàng.");picking={...g,variants:available};pickVariant=available[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();document.getElementById("optionModal").classList.add("open");document.body.style.overflow="hidden"}
+function openOptions(key){let g=groupedMenu().find(x=>x.key===key);if(!g)return;picking=g;pickVariant=g.variants[0];pickToppings=[];document.getElementById("optionTitle").textContent=g.name;renderOptions();document.getElementById("optionModal").classList.add("open");document.body.style.overflow="hidden"}
 function closeOptions(){document.getElementById("optionModal").classList.remove("open");document.body.style.overflow=""}
 function renderOptions(){let g=picking;if(!g)return;
 let currentImg=(pickVariant&&pickVariant.img)||g.img||"logo.jpg";
@@ -1876,8 +1835,25 @@ function renderCounter(){
         <div class="counter-cart-form">
           <label><b>Ghi chú</b></label>
           <textarea id="counterNote" class="counter-note" placeholder="Ít đá, ít đường, ghi chú..."></textarea>
-          <div class="total"><span>Tổng</span><span id="counterTotal">0đ</span></div>
-          <button class="primary counter-submit" onclick="submitCounterOrder()">🧾 Tạo đơn tại quầy</button>
+          <div class="total"><span>Tổng thanh toán</span><span id="counterTotal">0đ</span></div>
+          <div class="payment-box">
+            <div class="payment-title">💳 Thanh toán tại quầy</div>
+            <div class="payment-methods">
+              <button id="payCashBtn" class="pay-method active" type="button" onclick="setCounterPayment('cash')">💵 Tiền mặt</button>
+              <button id="payTransferBtn" class="pay-method" type="button" onclick="setCounterPayment('transfer')">🏦 Chuyển khoản</button>
+            </div>
+            <div id="counterCashBox" class="cash-box">
+              <label><b>Khách đưa</b></label>
+              <input id="counterCashReceived" type="number" inputmode="numeric" min="0" step="1000" placeholder="Nhập số tiền khách đưa" oninput="updateCounterChange()">
+              <div class="change-row"><span>Tiền thừa trả khách</span><span id="counterChange">0đ</span></div>
+            </div>
+            <div id="counterTransferBox" class="transfer-preview" style="display:none">
+              <b>Quét QR để thanh toán</b>
+              <img id="counterTransferQR" alt="QR chuyển khoản MB Bank">
+              <div class="bank-line"><b>MB BANK • 0976020701</b><br>DINH THI MAI SEN<br><span id="counterTransferAmount"></span></div>
+            </div>
+          </div>
+          <button class="primary counter-submit counter-pay-btn" onclick="submitCounterOrder()">✅ Xác nhận thanh toán & tạo đơn</button>
           <div class="counter-tip">
             <b>💡 Mẹo nhanh</b>
             <ul>
@@ -1912,17 +1888,96 @@ function renderCounterCart(){
   const badge=document.getElementById("counterBadge");if(badge)badge.textContent=count;
   box.innerHTML=cart.length?cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join(""):'<div class="counter-empty-visual"><div class="counter-empty-icon">🛒</div><div>Chưa chọn món.</div></div>';
   document.getElementById("counterTotal").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0));
+  updateCounterPaymentUI();
 }
 function counterChg(i,d){let x=cart[i];if(!x)return;x.qty+=d;if(x.qty<1)cart.splice(i,1);sessionStorage.setItem("uno_cart",JSON.stringify(cart));renderCounterCart()}
 function clearCounterCart(){if(cart.length&&!confirm("Xóa toàn bộ giỏ tại quầy?"))return;cart=[];sessionStorage.setItem("uno_cart","[]");renderCounterCart()}
+let counterPaymentMethod="cash";
+function counterCartTotal(){return cart.reduce((a,x)=>a+x.unitPrice*x.qty,0)}
+function setCounterPayment(method){
+  counterPaymentMethod=method;
+  document.getElementById("payCashBtn")?.classList.toggle("active",method==="cash");
+  document.getElementById("payTransferBtn")?.classList.toggle("active",method==="transfer");
+  const cash=document.getElementById("counterCashBox"),transfer=document.getElementById("counterTransferBox");
+  if(cash)cash.style.display=method==="cash"?"grid":"none";
+  if(transfer)transfer.style.display=method==="transfer"?"block":"none";
+  updateCounterPaymentUI();
+}
+function counterVietQR(amount,orderCode=""){
+  const info=orderCode?`UNNO ${orderCode}`:"THANH TOAN UNNO";
+  return `https://img.vietqr.io/image/MB-0976020701-compact2.png?amount=${Math.max(0,Math.round(amount))}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent("DINH THI MAI SEN")}`;
+}
+function updateCounterChange(){
+  const total=counterCartTotal(),received=Number(document.getElementById("counterCashReceived")?.value||0);
+  const el=document.getElementById("counterChange");
+  if(el)el.textContent=money(Math.max(0,received-total));
+}
+function updateCounterPaymentUI(){
+  const total=counterCartTotal();
+  updateCounterChange();
+  const amount=document.getElementById("counterTransferAmount");
+  if(amount)amount.textContent=`Số tiền: ${money(total)}`;
+  const qr=document.getElementById("counterTransferQR");
+  if(qr&&total>0)qr.src=counterVietQR(total);
+}
 async function submitCounterOrder(){
   if(!cart.length)return alert("Chưa chọn món.");
+  const total=counterCartTotal();
+  let paymentText="";
+  if(counterPaymentMethod==="cash"){
+    const received=Number(document.getElementById("counterCashReceived")?.value||0);
+    if(received>0&&received<total)return alert("Số tiền khách đưa chưa đủ.");
+    paymentText=[
+      "[THANH TOÁN: TIỀN MẶT]",
+      received>0?"Khách đưa: "+money(received):"",
+      received>0?"Tiền thừa: "+money(Math.max(0,received-total)):""
+    ].filter(Boolean).join("\n");
+  }else{
+    paymentText="[THANH TOÁN: CHUYỂN KHOẢN]\\nMB BANK - 0976020701 - DINH THI MAI SEN";
+  }
   const noteEl=document.getElementById("counterNote");
-  document.getElementById("note").value=noteEl?noteEl.value:"";
+  const staffNote=noteEl?noteEl.value.trim():"";
+  document.getElementById("note").value=[staffNote,paymentText].filter(Boolean).join("\n");
   await placeOrder();
 }
 
 let knownOrderIds=null,newOrderUnread=0,audioCtx=null;
+let unnoSpeechVoice=null;
+
+function prepareUnnoSpeech(){
+  try{
+    if(!("speechSynthesis" in window))return;
+    const voices=window.speechSynthesis.getVoices();
+    unnoSpeechVoice=
+      voices.find(v=>/^vi(-|_)/i.test(v.lang) && /vietnam/i.test(v.name)) ||
+      voices.find(v=>/^vi(-|_)/i.test(v.lang)) ||
+      null;
+  }catch(e){}
+}
+if("speechSynthesis" in window){
+  prepareUnnoSpeech();
+  window.speechSynthesis.onvoiceschanged=prepareUnnoSpeech;
+  // Sau lần bấm/chạm đầu tiên trên trang Admin, trình duyệt sẽ sẵn sàng phát âm thanh/TTS.
+  const unlockSpeech=()=>{prepareUnnoSpeech();};
+  window.addEventListener("pointerdown",unlockSpeech,{once:true,passive:true});
+  window.addEventListener("keydown",unlockSpeech,{once:true});
+}
+
+function adminSpeakNewOrder(){
+  try{
+    if(!("speechSynthesis" in window))return;
+    // Không xếp hàng nhiều câu nếu nhiều tín hiệu đơn mới đến sát nhau.
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance("Bạn có đơn hàng mới");
+    u.lang="vi-VN";
+    u.rate=0.95;
+    u.pitch=1;
+    u.volume=1;
+    if(unnoSpeechVoice)u.voice=unnoSpeechVoice;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
 function adminBeep(){
   try{
     audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
@@ -1952,6 +2007,7 @@ function showNewOrderAlert(count=1){
   syncOrderTabAttention();
   document.title="🔴 Có đơn mới • UnNo Tea";
   adminBeep();
+  adminSpeakNewOrder();
 }
 function dismissNewOrderAlert(){
   newOrderUnread=0;
@@ -2012,46 +2068,97 @@ function orderCard(o){
   let next=o.status==="Mới"?"Đang làm":o.status==="Đang làm"?"Hoàn thành":"";
   let label=o.table_number==="GIAO HÀNG"?"🚚 Giao hàng":o.table_number==="MANG VỀ"?"🥡 Mang về":o.table_number==="TẠI QUẦY"?"🧾 Tại quầy":"Bàn "+esc(o.table_number);
   return `<article class="order"><h3>${label}</h3><div class="status">${esc(o.status)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div><ul>${(o.order_items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity}</li>`).join("")}</ul>${o.note?`<div class="small" style="white-space:pre-line"><b>Thông tin:</b>
-${esc(o.note)}</div>`:""}<div class="row mt"><b>${money(total)}</b></div><div class="actions">${next?`<button class="next" onclick="advance(${o.id},'${next}')">${next}</button>`:""}<button class="billbtn" onclick="printBill(${o.id})">🧾 In hóa đơn</button><button onclick="delOrder(${o.id})">Xóa</button></div></article>`
+${esc(o.note)}</div>`:""}<div class="row mt"><b>${money(total)}</b></div><div class="actions">${next?`<button class="next" onclick="advance(${o.id},'${next}')">${next}</button>`:""}<button class="billbtn" onclick="printBill(${o.id})">🧾 In hóa đơn chuyên nghiệp</button><button onclick="delOrder(${o.id})">Xóa</button></div></article>`
 }
 
 async function printBill(id){
+  // Mở cửa sổ trước khi await để giảm khả năng iPhone/Safari chặn pop-up.
+  let w=window.open("","_blank","width=430,height=820");
+  if(!w)return alert("Trình duyệt đang chặn cửa sổ in. Hãy cho phép pop-up cho trang này.");
+  w.document.write('<div style="font-family:Arial;padding:24px;text-align:center">Đang chuẩn bị hóa đơn...</div>');
   let {data:o,error}=await sb.from("orders").select("*,order_items(*)").eq("id",id).single();
-  if(error||!o)return alert(error?.message||"Không tìm thấy đơn.");
+  if(error||!o){w.close();return alert(error?.message||"Không tìm thấy đơn.");}
   let total=(o.order_items||[]).reduce((a,i)=>a+i.price*i.quantity,0);
   let label=o.table_number==="GIAO HÀNG"?"GIAO HÀNG":o.table_number==="MANG VỀ"?"MANG VỀ":o.table_number==="TẠI QUẦY"?"TẠI QUẦY":"BÀN "+o.table_number;
-  let items=(o.order_items||[]).map(i=>`
-    <tr><td>${esc(i.item_name)} × ${i.quantity}</td><td style="text-align:right">${money(i.price*i.quantity)}</td></tr>
-  `).join("");
-  let note=o.note?`<div class="note"><b>Thông tin / ghi chú:</b><br>${esc(o.note).replace(/\n/g,"<br>")}</div>`:"";
-  let w=window.open("","_blank","width=420,height=760");
-  if(!w)return alert("Trình duyệt đang chặn cửa sổ in. Hãy cho phép pop-up cho trang này.");
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Hóa đơn UnNo Tea</title>
+  let payment=(o.note||"").includes("[THANH TOÁN: CHUYỂN KHOẢN]")?"CHUYỂN KHOẢN":(o.note||"").includes("[THANH TOÁN: TIỀN MẶT]")?"TIỀN MẶT":"CHƯA GHI NHẬN";
+  let cashReceived=((o.note||"").match(/Khách đưa:\s*([^\n]+)/)||[])[1]||"";
+  let cashChange=((o.note||"").match(/Tiền thừa:\s*([^\n]+)/)||[])[1]||"";
+  let cleanNote=(o.note||"")
+    .replace(/\[TẠI QUẦY\]\n?/g,"")
+    .replace(/\[THANH TOÁN:[^\]]+\]\n?/g,"")
+    .replace(/MB BANK - 0976020701 - DINH THI MAI SEN\n?/g,"")
+    .replace(/Khách đưa:[^\n]*\n?/g,"")
+    .replace(/Tiền thừa:[^\n]*\n?/g,"")
+    .replace(/^Ghi chú:\s*/,"").trim();
+  let items=(o.order_items||[]).map((i,idx)=>`
+    <tr>
+      <td class="num">${idx+1}</td>
+      <td><b>${esc(i.item_name)}</b><div class="muted">${i.quantity} × ${money(i.price)}</div></td>
+      <td class="right"><b>${money(i.price*i.quantity)}</b></td>
+    </tr>`).join("");
+  let qr=counterVietQR(total,"DH"+o.id);
+  let note=cleanNote?`<div class="note"><b>Ghi chú:</b> ${esc(cleanNote).replace(/\n/g,"<br>")}</div>`:"";
+  let payExtra=payment==="TIỀN MẶT"&&cashReceived?`
+    <div class="payline"><span>Khách đưa</span><b>${esc(cashReceived)}</b></div>
+    <div class="payline"><span>Tiền thừa</span><b>${esc(cashChange||"0đ")}</b></div>`:"";
+  let qrBlock=payment==="CHUYỂN KHOẢN"?`
+    <div class="qrbox">
+      <div class="qrtitle">QUÉT QR THANH TOÁN</div>
+      <img src="${qr}" alt="QR thanh toán" onload="window.__qrLoaded=true">
+      <div><b>MB BANK • 0976020701</b></div>
+      <div>DINH THI MAI SEN</div>
+      <div class="qramount">${money(total)}</div>
+      <div class="muted">Nội dung: UNNO DH${o.id}</div>
+    </div>`:"";
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Hóa đơn #${o.id} • UnNo Tea</title>
   <style>
-  @page{size:80mm auto;margin:4mm}
-  body{font-family:Arial,sans-serif;color:#000;width:72mm;margin:auto;font-size:12px}
-  .c{text-align:center}.brand{font-size:20px;font-weight:900}.dash{border-top:1px dashed #000;margin:8px 0}
-  table{width:100%;border-collapse:collapse}td{padding:4px 0;vertical-align:top}.total{font-size:16px;font-weight:900}
-  .note{font-size:11px;margin-top:8px;white-space:normal}
+    @page{size:80mm auto;margin:3mm}
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;color:#111;width:74mm;margin:0 auto;font-size:11.5px;line-height:1.35}
+    .center{text-align:center}.brand{font-size:22px;font-weight:900;letter-spacing:.3px}
+    .sub{font-size:10px}.billtitle{font-size:14px;font-weight:900;margin-top:6px}
+    .dash{border-top:1px dashed #555;margin:8px 0}
+    .meta{display:flex;justify-content:space-between;gap:8px;margin:2px 0}
+    table{width:100%;border-collapse:collapse}.num{width:16px}.right{text-align:right;white-space:nowrap}
+    td{padding:5px 0;vertical-align:top;border-bottom:1px dotted #bbb}
+    .muted{font-size:10px;color:#444}.grand{font-size:17px;font-weight:900}
+    .paybox{border:1px solid #111;border-radius:5px;padding:7px;margin-top:7px}
+    .payline{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+    .note{margin-top:7px;padding:6px;border:1px dashed #777}
+    .qrbox{text-align:center;margin-top:10px;padding-top:8px;border-top:1px dashed #555}
+    .qrbox img{width:46mm;height:auto;display:block;margin:6px auto}
+    .qrtitle{font-weight:900;font-size:12px}.qramount{font-size:16px;font-weight:900;margin:3px}
+    .footer{margin-top:10px;text-align:center;font-size:10.5px}
+    .ordercode{font-family:monospace;font-size:12px;font-weight:900;letter-spacing:.6px}
   </style></head><body>
-  <div class="c brand">UnNo Tea</div>
-  <div class="c">Est. 2021</div>
-  <div class="dash"></div>
-  <b>${label}</b><br>
-  Mã đơn: #${o.id}<br>
-  Thời gian: ${new Date(o.created_at).toLocaleString("vi-VN")}
-  <div class="dash"></div>
-  <table>${items}</table>
-  <div class="dash"></div>
-  <table><tr><td class="total">TỔNG</td><td class="total" style="text-align:right">${money(total)}</td></tr></table>
-  ${note}
-  <div class="dash"></div>
-  <div class="c">Cảm ơn quý khách ❤️<br>UnNo Tea</div>
-  <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script>
+    <div class="center brand">UnNo Tea</div>
+    <div class="center sub">Est. 2021</div>
+    <div class="center billtitle">HÓA ĐƠN THANH TOÁN</div>
+    <div class="dash"></div>
+    <div class="meta"><b>${label}</b><span class="ordercode">#${o.id}</span></div>
+    <div class="meta"><span>Ngày giờ</span><span>${new Date(o.created_at).toLocaleString("vi-VN")}</span></div>
+    <div class="dash"></div>
+    <table>${items}</table>
+    <div class="dash"></div>
+    <div class="payline grand"><span>TỔNG CỘNG</span><span>${money(total)}</span></div>
+    <div class="paybox">
+      <div class="payline"><span>Thanh toán</span><b>${payment}</b></div>
+      ${payExtra}
+    </div>
+    ${note}
+    ${qrBlock}
+    <div class="footer">
+      <b>MÃ HÓA ĐƠN: UNNO-DH${o.id}</b><br>
+      Cảm ơn quý khách đã ủng hộ UnNo Tea ❤️<br>
+      Hẹn gặp lại quý khách!
+    </div>
+    <script>
+      window.onload=()=>setTimeout(()=>window.print(),${payment==="CHUYỂN KHOẢN"?"700":"250"});
+    <\/script>
   </body></html>`);
   w.document.close();
 }
-
 async function advance(id,status){let {error}=await sb.from("orders").update({status}).eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
 async function delOrder(id){if(!confirm("Xóa đơn này?"))return;let {error}=await sb.from("orders").delete().eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
 function renderManage(){document.getElementById("adminView").innerHTML=`<div class="panel"><h2>Thêm món</h2><div class="formgrid"><input id="mn" placeholder="Tên món"><input id="mp" type="number" placeholder="Giá"><input id="mc" placeholder="Danh mục"><input id="mi" placeholder="URL ảnh"><input id="md" class="wide" placeholder="Mô tả"><input id="ms" type="number" value="0" placeholder="Thứ tự"><button class="primary wide" onclick="addMenu()">Thêm món</button></div></div><div class="panel" style="margin-top:12px"><h2>Menu hiện tại</h2><div class="bulk-stock-bar"><button onclick="selectAllMenuItems(true)">☑ Chọn tất cả</button><button onclick="selectAllMenuItems(false)">Bỏ chọn</button><button class="danger" onclick="bulkSetAvailability(false)">Hết hàng đã chọn</button><button class="ok" onclick="bulkSetAvailability(true)">Bán lại đã chọn</button><span id="bulkStockCount" class="bulk-stock-count">Đã chọn 0 món</span></div><div id="menulist">Đang tải...</div></div>`;loadManage()}
