@@ -1618,6 +1618,125 @@ body.admin-mode.counter-view .transfer-preview .bank-line{
 }
 </style>
 
+
+<style id="unno-admin-mobile-pos-v1">
+/* ===== Admin Order tại quầy tối ưu điện thoại ===== */
+@media(max-width:760px){
+  body.admin-mode header{position:sticky;top:0;z-index:80}
+  body.admin-mode header .nav{
+    min-height:auto!important;padding:7px 9px!important;gap:7px!important;align-items:center
+  }
+  body.admin-mode header .logo{width:38px!important;height:38px!important}
+  body.admin-mode header .brand{font-size:15px!important}
+  body.admin-mode header .brandbox .small{font-size:9px!important}
+  body.admin-mode #table{font-size:10px!important;padding:7px 9px!important}
+  body.admin-mode #adminNavSlot{
+    order:4;width:100%;overflow-x:auto;scrollbar-width:none
+  }
+  body.admin-mode #adminNavSlot::-webkit-scrollbar{display:none}
+  body.admin-mode .adminbar{
+    display:flex!important;flex-wrap:nowrap!important;gap:5px!important;
+    overflow-x:auto!important;padding:5px 0 1px!important;width:max-content;min-width:100%
+  }
+  body.admin-mode .adminbar .tab{
+    flex:0 0 auto!important;white-space:nowrap!important;
+    padding:8px 10px!important;font-size:11px!important;border-radius:9px!important
+  }
+  body.admin-mode #dash>.row:first-child{padding:7px 10px!important}
+  body.admin-mode #dash>.row:first-child h1,
+  body.admin-mode #dash>.row:first-child h2{font-size:20px!important}
+  body.admin-mode main#admin{padding:8px!important}
+  body.admin-mode.counter-view #adminView>.panel:first-child{
+    margin-bottom:7px!important;padding:9px!important
+  }
+  body.admin-mode.counter-view #adminView>.panel:first-child h2{font-size:17px!important}
+  body.admin-mode.counter-view #adminView>.panel:first-child .small{font-size:10px!important}
+  body.admin-mode.counter-view .counter-wrap{
+    display:block!important
+  }
+  body.admin-mode.counter-view .counter-menu{
+    width:100%!important;min-width:0!important
+  }
+  body.admin-mode.counter-view .search-wrap{
+    position:sticky;top:100px;z-index:35;background:var(--bg,#f7f5f0);
+    padding:2px 0 5px
+  }
+  body.admin-mode.counter-view #counterSearch{
+    height:42px!important;font-size:14px!important
+  }
+  body.admin-mode.counter-view .counter-catbar{
+    display:flex!important;overflow-x:auto!important;flex-wrap:nowrap!important;
+    gap:5px!important;padding:3px 0 7px!important;scrollbar-width:none
+  }
+  body.admin-mode.counter-view .counter-catbar::-webkit-scrollbar{display:none}
+  body.admin-mode.counter-view .counter-cat{
+    flex:0 0 auto!important;padding:7px 10px!important;font-size:11px!important
+  }
+  body.admin-mode.counter-view #counterMenu.grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;padding-bottom:92px!important
+  }
+  body.admin-mode.counter-view #counterMenu .card{min-width:0!important;border-radius:12px!important}
+  body.admin-mode.counter-view #counterMenu .pic{
+    height:105px!important;object-fit:cover!important
+  }
+  body.admin-mode.counter-view #counterMenu .body{padding:8px!important}
+  body.admin-mode.counter-view #counterMenu .name{
+    font-size:12px!important;line-height:1.25!important;min-height:30px
+  }
+  body.admin-mode.counter-view #counterMenu .desc{display:none!important}
+  body.admin-mode.counter-view #counterMenu .price{font-size:12px!important}
+  body.admin-mode.counter-view #counterMenu .add{
+    width:30px!important;height:30px!important;font-size:18px!important
+  }
+
+  /* Giỏ trên mobile thành nút nổi, không chiếm nửa màn hình */
+  body.admin-mode.counter-view .counter-cart{
+    position:fixed!important;left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;
+    z-index:70!important;max-height:72px!important;overflow:hidden!important;
+    padding:0!important;border-radius:15px!important;
+    box-shadow:0 7px 28px rgba(0,0,0,.22)!important;
+    background:#111!important;color:#fff!important;cursor:pointer
+  }
+  body.admin-mode.counter-view .counter-cart-head{
+    height:64px!important;padding:0 15px!important;margin:0!important;border:0!important;
+    display:flex!important;align-items:center!important
+  }
+  body.admin-mode.counter-view .counter-cart-title h3{color:#fff!important;font-size:14px!important}
+  body.admin-mode.counter-view .counter-badge{background:#fff!important;color:#111!important}
+  body.admin-mode.counter-view .counter-cart:after{
+    content:"Chạm để xem giỏ & thanh toán";
+    margin-left:auto;padding-right:14px;font-size:10px;font-weight:800;color:#ddd;
+    position:absolute;right:6px;bottom:7px
+  }
+  body.admin-mode.counter-view .counter-cart>#counterCartItems,
+  body.admin-mode.counter-view .counter-cart>.counter-cart-form{display:none!important}
+
+  /* Khi mở giỏ: bottom sheet POS đầy đủ */
+  body.admin-mode.counter-view .counter-cart.mobile-open{
+    max-height:min(82dvh,720px)!important;height:auto!important;
+    background:#fff!important;color:#111!important;
+    overflow-y:auto!important;padding:10px!important;
+    border-radius:18px 18px 0 0!important;left:0!important;right:0!important;bottom:0!important
+  }
+  body.admin-mode.counter-view .counter-cart.mobile-open:after{display:none!important}
+  body.admin-mode.counter-view .counter-cart.mobile-open .counter-cart-head{
+    height:auto!important;padding:5px 4px 10px!important
+  }
+  body.admin-mode.counter-view .counter-cart.mobile-open .counter-cart-title h3{color:#111!important}
+  body.admin-mode.counter-view .counter-cart.mobile-open .counter-badge{background:#111!important;color:#fff!important}
+  body.admin-mode.counter-view .counter-cart.mobile-open>#counterCartItems{
+    display:block!important;max-height:210px!important;overflow:auto!important
+  }
+  body.admin-mode.counter-view .counter-cart.mobile-open>.counter-cart-form{display:block!important}
+  body.admin-mode.counter-view .counter-cart.mobile-open .payment-box{padding:8px!important}
+  body.admin-mode.counter-view .counter-cart.mobile-open .transfer-preview img{width:120px!important}
+  body.admin-mode.counter-view .counter-cart.mobile-open .counter-pay-btn{
+    position:sticky!important;bottom:0!important;z-index:4!important;width:100%!important
+  }
+}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1836,6 +1955,7 @@ async function placeOrder(){
   if(counterOrdering){
     alert("Đã tạo đơn tại quầy!");
     renderCounter();
+    toggleMobileCounterCart(false);
   }else{
     alert(orderMode==="delivery"?"Đã gửi đơn giao hàng! Quán sẽ liên hệ xác nhận.":orderMode==="pickup"?"Đã gửi đơn mang về! Quán sẽ liên hệ xác nhận.":"Đã gửi order thành công!");
     openMyOrders();
@@ -1995,6 +2115,9 @@ function renderCounter(){
       </div>
     </div>`;
   renderCounterMenu();renderCounterCart();
+  const mobileCart=document.querySelector(".counter-cart");
+  const mobileHead=document.querySelector(".counter-cart-head");
+  if(mobileHead)mobileHead.onclick=()=>toggleMobileCounterCart();
 }
 function setCounterCat(btn,c){
   counterCategory=c;
@@ -2009,6 +2132,12 @@ function renderCounterMenu(){
   if(q)d=d.filter(g=>groupMatches(g,q));
   box.innerHTML=d.map(g=>{let min=Math.min(...g.variants.map(v=>+v.price));let multi=g.variants.length>1;return `<article class="card" data-key="${encodeURIComponent(g.key)}"><img class="pic" src="${esc(g.img)}" onerror="this.src='logo.jpg'"><div class="body"><div class="name">${esc(g.name)}</div><div class="desc">${esc(g.desc||"")}</div><div class="row mt"><span class="price">${multi?"Từ ":""}${money(min)}</span><button class="add" type="button" aria-label="Chọn ${esc(g.name)}">+</button></div></div></article>`}).join("")||'<div class="counter-empty">Không tìm thấy món phù hợp.</div>';
   box.querySelectorAll(".card").forEach(card=>card.addEventListener("click",()=>openOptions(decodeURIComponent(card.dataset.key))));
+}
+function toggleMobileCounterCart(force){
+  if(window.innerWidth>760)return;
+  const el=document.querySelector(".counter-cart");if(!el)return;
+  const on=typeof force==="boolean"?force:!el.classList.contains("mobile-open");
+  el.classList.toggle("mobile-open",on);
 }
 function renderCounterCart(){
   const box=document.getElementById("counterCartItems");if(!box)return;
