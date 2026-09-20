@@ -2056,6 +2056,10 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 #myOrderModal [data-track-status],
 #myOrderModal [data-order-progress]{display:none!important}
 </style>
+
+<style id="unno-customer-tracking-clean-v4232">
+.trackbox,.trackbar,.tracklabels{display:none!important}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2106,7 +2110,7 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 </div>
 <div id="optionModal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><h2 id="optionTitle">Chọn món</h2><button class="close" onclick="closeOptions()">×</button></div><div id="optionBody"></div><button id="optionAdd" class="primary" onclick="confirmOptions()">Thêm vào giỏ</button></div></div>
 <div id="modal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><h2>Giỏ hàng</h2><button class="close" onclick="closeCart()">×</button></div><div id="cartItems"></div><label>Ghi chú cho quán</label><textarea id="note" placeholder="Ít đá, ít đường, thời gian muốn nhận..."></textarea><div class="total"><span>Tổng</span><span id="modalSum">0đ</span></div><button id="placeOrderBtn" class="primary" onclick="placeOrder()">Gửi order</button></div></div>
-<div id="ordersModal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><div><h2 style="margin:0">📋 Đơn của tôi</h2><div class="small">Tự cập nhật trạng thái từ quán</div></div><button class="close" onclick="closeMyOrders()">×</button></div><div id="myOrdersList"><div class="empty">Chưa có đơn nào trên máy này.</div></div></div></div>
+<div id="ordersModal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><div><h2 style="margin:0">📋 Đơn của tôi</h2><div class="small">Các món quý khách đã gọi</div></div><button class="close" onclick="closeMyOrders()">×</button></div><div id="myOrdersList"><div class="empty">Chưa có đơn nào trên máy này.</div></div></div></div>
 
 
 <div id="customerDisplay" aria-live="polite">
@@ -2436,7 +2440,7 @@ async function loadMyOrders(){
   const sv=customerStatusVisual(o.status);
   const total=(o.items||[]).reduce((a,i)=>a+Number(i.price||0)*Number(i.quantity||0),0);
   box.innerHTML=`<div class="myorder">
-      <div class="myorder-head"><div><b>${customerOrderLabel(o)}</b><div class="small">Mã #${esc(o.id)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div></div><b>${esc(o.status)}</b></div>
+      <div class="myorder-head"><div><b>${customerOrderLabel(o)}</b><div class="small">Mã #${esc(o.id)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div></div></div>
       <div class="customer-status-box ${sv.cls}">
         <div class="customer-status-icon">${sv.icon}</div>
         <div><div class="customer-status-title">${sv.title}</div><div class="customer-status-sub">${sv.sub}</div></div>
