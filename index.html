@@ -1964,6 +1964,16 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 .cd-order-menu .cd-menu-cat.snack-wide .cd-menu-rows,.cd-pay-menu .cd-menu-cat.snack-wide .cd-menu-rows{column-gap:8px}
 </style>
 
+
+<style id="unno-display-hard-fallback-v4173">
+body.customer-display-mode #customerDisplay.cd-show{display:block!important;visibility:visible!important;opacity:1!important}
+body.customer-display-mode #customerDisplay #cdIdle.active{display:block!important;visibility:visible!important;opacity:1!important;transform:none!important;background:#0d3327!important}
+body.customer-display-mode #customerDisplay #cdIdle.active .cd-idle-banners{display:block!important;visibility:visible!important;opacity:1}
+body.customer-display-mode #customerDisplay #cdIdle.active .cd-idle-banner.active{display:block!important;visibility:visible!important;opacity:1!important}
+body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-banners{opacity:0!important}
+body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{display:block!important;visibility:visible!important;opacity:1!important}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2020,8 +2030,8 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 <div id="customerDisplay" aria-live="polite">
   <section id="cdIdle" class="cd-screen cd-idle active">
     <div class="cd-idle-banners">
-      <img class="cd-idle-banner active" src="banners/banner-1.png" alt="">
-      <img class="cd-idle-banner" src="banners/banner-2.png" alt="">
+      <img class="cd-idle-banner active" src="banners/banner-1.png?v=4173" alt="">
+      <img class="cd-idle-banner" src="banners/banner-2.png?v=4173" alt="">
     </div>
     <div id="cdMenuFull" class="cd-idle-menu"></div>
   </section>
@@ -3033,7 +3043,12 @@ function initMainScreenActivityBridge(){
 }
 let cdThanksTimer=null;
 function cdState(){
-  try{return JSON.parse(localStorage.getItem(CUSTOMER_DISPLAY_KEY)||"{}")}catch(e){return {}}
+  try{
+    const x=JSON.parse(localStorage.getItem(CUSTOMER_DISPLAY_KEY)||"{}");
+    if(!x || typeof x!=="object")return {mode:"idle"};
+    if(!["idle","order","payment","thanks"].includes(x.mode))x.mode="idle";
+    return x;
+  }catch(e){return {mode:"idle"}}
 }
 function publishCustomerDisplay(extra={}){
   if(isCustomerDisplay)return;
@@ -3114,11 +3129,28 @@ function initIdleBannerMenu(){
 }
 function initCustomerDisplay(){
   document.body.classList.add("customer-display-mode");
-  document.getElementById("customerDisplay")?.classList.add("cd-show");
-  renderCustomerStaticMenus();
-  renderCustomerDisplay();
-  initIdleBannerMenu();
-  window.addEventListener("storage",e=>{if(e.key===CUSTOMER_DISPLAY_KEY&&e.newValue){try{renderCustomerDisplay(JSON.parse(e.newValue))}catch(_){}}});
+  const root=document.getElementById("customerDisplay");
+  const idle=document.getElementById("cdIdle");
+  if(root){
+    root.classList.add("cd-show");
+    root.style.display="block";
+    root.style.visibility="visible";
+    root.style.opacity="1";
+  }
+  if(idle){
+    cdActivate("cdIdle");
+    idle.style.opacity="1";
+    idle.style.visibility="visible";
+  }
+  // Banner is the fail-safe. Menu/order rendering must never be able to blank the display.
+  try{initIdleBannerMenu()}catch(e){console.warn("Display banner init:",e)}
+  try{renderCustomerStaticMenus()}catch(e){console.warn("Display menu init:",e)}
+  try{renderCustomerDisplay()}catch(e){console.warn("Display state init:",e);cdActivate("cdIdle")}
+  window.addEventListener("storage",e=>{
+    if(e.key===CUSTOMER_DISPLAY_KEY&&e.newValue){
+      try{renderCustomerDisplay(JSON.parse(e.newValue))}catch(err){console.warn("Display sync:",err);cdActivate("cdIdle")}
+    }
+  });
 }
 
 if(isCustomerDisplay){
