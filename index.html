@@ -1951,7 +1951,7 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 
 <style id="unno-display-idle-banner-v417">
 #cdIdle{position:relative;overflow:hidden}
-.cd-idle-banners{position:absolute;inset:0;background:#0d3327;z-index:1}
+.cd-idle-banners{position:absolute;inset:0;background:#0d3327;z-index:1;opacity:1;transition:opacity .28s ease}
 .cd-idle-banner{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease}
 .cd-idle-banner.active{opacity:1}
 .cd-idle-menu{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;transition:opacity .28s ease;background:#fbf8f0}
@@ -3125,9 +3125,13 @@ if(isCustomerDisplay){
   document.getElementById("customer").style.display="none";
   document.getElementById("admin").style.display="none";
   document.getElementById("cartBar").style.display="none";
+  // Show banner immediately; menu can finish loading afterwards.
+  initCustomerDisplay();
+}else{
+  initMainScreenActivityBridge();
 }
 if(!isCustomerDisplay && (isAdminPath || params.get("admin")==="1")){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
-if(sb){loadMenu().then(()=>{if(isCustomerDisplay)initCustomerDisplay()});if(!isCustomerDisplay)channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload)).subscribe()}else{loadMenu().then(()=>{if(isCustomerDisplay)initCustomerDisplay()});if(!isCustomerDisplay)document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
+if(sb){loadMenu().then(()=>{if(isCustomerDisplay)renderCustomerStaticMenus()}).catch(()=>{});if(!isCustomerDisplay)channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload)).subscribe()}else{loadMenu().then(()=>{if(isCustomerDisplay)renderCustomerStaticMenus()}).catch(()=>{});if(!isCustomerDisplay)document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
 
 setInterval(()=>{
   const om=document.getElementById("ordersModal");
