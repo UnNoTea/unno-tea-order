@@ -2361,11 +2361,23 @@ function renderCounter(){
         </div>
         <div id="counterCartItems"></div>
         <div class="counter-cart-form">
-          <label><b>Ghi chú</b></label>
+          <div class="open-table-box" style="border:1px solid #e7e1d8;border-radius:12px;padding:10px;margin-bottom:10px;background:#fffdf8">
+            <label><b>🪑 Bàn khách</b></label>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:6px">
+              <select id="counterTableSelect" onchange="loadOpenTable(this.value)">
+                <option value="">Chọn bàn...</option>
+                ${Array.from({length:30},(_,i)=>`<option value="${i+1}">Bàn ${i+1}</option>`).join("")}
+              </select>
+              <button type="button" class="tab" onclick="loadOpenTable(document.getElementById('counterTableSelect').value)">Mở bàn</button>
+            </div>
+            <div id="counterOpenInfo" class="small" style="margin-top:6px">Chọn bàn để gửi món và thanh toán sau.</div>
+          </div>
+          <label><b>Ghi chú món gọi thêm</b></label>
           <textarea id="counterNote" class="counter-note" placeholder="Ít đá, ít đường, ghi chú..."></textarea>
-          <div class="total"><span>Tổng thanh toán</span><span id="counterTotal">0đ</span></div>
+          <div id="counterOpenBillSummary" class="small" style="margin:8px 0"></div>
+          <div class="total"><span>Món đang chọn</span><span id="counterTotal">0đ</span></div>
           <div class="payment-box">
-            <div class="payment-title">💳 Thanh toán tại quầy</div>
+            <div class="payment-title">💳 Thanh toán khi khách ra về</div>
             <div class="payment-methods">
               <button id="payCashBtn" class="pay-method active" type="button" onclick="setCounterPayment('cash')">💵 Tiền mặt</button>
               <button id="payTransferBtn" class="pay-method" type="button" onclick="setCounterPayment('transfer')">🏦 Chuyển khoản</button>
@@ -2381,11 +2393,15 @@ function renderCounter(){
               <div class="bank-line"><b>MB BANK • 0976020701</b><br>DINH THI MAI SEN<br><span id="counterTransferAmount"></span></div>
             </div>
           </div>
-          <button class="primary counter-submit counter-pay-btn" onclick="submitCounterOrder()">✅ Xác nhận thanh toán & tạo đơn</button>
+          <button class="primary counter-submit" onclick="sendCounterItems()">🍹 Gửi món / In tem</button>
+          <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="margin-top:7px;background:#173d2d;color:#fff" onclick="payOpenTable()">💳 Thanh toán & đóng bàn</button>
         </div>
       </div>
     </div>`;
   renderCounterMenu();renderCounterCart();
+  const tableSel=document.getElementById("counterTableSelect");
+  if(tableSel&&counterOpenTable)tableSel.value=counterOpenTable;
+  if(counterOpenTable)loadOpenTable(counterOpenTable);
   const mobileCart=document.querySelector(".counter-cart");
   const mobileHead=document.querySelector(".counter-cart-head");
   if(mobileHead)mobileHead.onclick=()=>toggleMobileCounterCart();
@@ -2414,13 +2430,20 @@ function renderCounterCart(){
   const badge=document.getElementById("counterBadge");if(badge)badge.textContent=count;
   box.innerHTML=cart.length?cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join(""):'<div class="counter-empty-visual"><div class="counter-empty-icon">🛒</div><div>Chưa chọn món.</div></div>';
   document.getElementById("counterTotal").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0));
+  const sum=document.getElementById("counterOpenBillSummary");
+  if(sum)sum.innerHTML=counterOpenOrderId?`Bill hiện tại Bàn ${esc(counterOpenTable)}: <b>${money(openTableTotal())}</b> • Gọi thêm sẽ cộng vào bill này.`:"";
   updateCounterPaymentUI();
   publishCustomerDisplay();
 }
 function counterChg(i,d){let x=cart[i];if(!x)return;x.qty+=d;if(x.qty<1)cart.splice(i,1);sessionStorage.setItem("uno_cart",JSON.stringify(cart));renderCounterCart()}
 function clearCounterCart(){if(cart.length&&!confirm("Xóa toàn bộ giỏ tại quầy?"))return;cart=[];sessionStorage.setItem("uno_cart","[]");renderCounterCart();publishCustomerDisplay({mode:"idle"})}
+let counterOpenOrderId=null;
+let counterOpenTable="";
+let counterOpenItems=[];
+let counterOpenNote="";
 let counterPaymentMethod="cash";
 function counterCartTotal(){return cart.reduce((a,x)=>a+x.unitPrice*x.qty,0)}
+function counterGrandTotal(){return openTableTotal()+counterCartTotal()}
 function setCounterPayment(method){
   counterPaymentMethod=method;
   document.getElementById("payCashBtn")?.classList.toggle("active",method==="cash");
@@ -2429,26 +2452,108 @@ function setCounterPayment(method){
   if(cash)cash.style.display=method==="cash"?"grid":"none";
   if(transfer)transfer.style.display=method==="transfer"?"block":"none";
   updateCounterPaymentUI();
-  publishCustomerDisplay({mode:cart.length?"payment":"idle"});
+  publishCustomerDisplay({mode:counterOpenOrderId?"payment":(cart.length?"order":"idle")});
 }
 function counterVietQR(amount,orderCode=""){
   const info=orderCode?`UNNO ${orderCode}`:"THANH TOAN UNNO";
   return `https://img.vietqr.io/image/MB-0976020701-compact2.png?amount=${Math.max(0,Math.round(amount))}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent("DINH THI MAI SEN")}`;
 }
 function updateCounterChange(){
-  const total=counterCartTotal(),received=Number(document.getElementById("counterCashReceived")?.value||0);
+  const total=counterGrandTotal(),received=Number(document.getElementById("counterCashReceived")?.value||0);
   const el=document.getElementById("counterChange");
   if(el)el.textContent=money(Math.max(0,received-total));
   if(counterOrdering && cart.length)publishCustomerDisplay({mode:counterPaymentMethod==="cash"&&received>0?"payment":"order"});
 }
 function updateCounterPaymentUI(){
-  const total=counterCartTotal();
+  const total=counterGrandTotal();
   updateCounterChange();
   const amount=document.getElementById("counterTransferAmount");
   if(amount)amount.textContent=`Số tiền: ${money(total)}`;
   const qr=document.getElementById("counterTransferQR");
   if(qr&&total>0)qr.src=counterVietQR(total);
 }
+
+function openTableMarker(){return "[CHƯA THANH TOÁN]";}
+function paidMarker(method){return method==="transfer"?"[THANH TOÁN: CHUYỂN KHOẢN]":"[THANH TOÁN: TIỀN MẶT]";}
+function openTableTotal(){return counterOpenItems.reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0)}
+function openTableDisplayItems(){
+  return counterOpenItems.map(x=>({name:x.item_name,unitPrice:Number(x.price||0),qty:Number(x.quantity||0)}));
+}
+async function loadOpenTable(tableNo){
+  counterOpenTable=String(tableNo||"");
+  counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";
+  const info=document.getElementById("counterOpenInfo");
+  if(!counterOpenTable){if(info)info.textContent="Chọn bàn để gửi món và thanh toán sau.";renderCounterCart();return}
+  if(!sb)return;
+  const {data,error}=await sb.from("orders").select("*,order_items(*)").eq("table_number",counterOpenTable).order("created_at",{ascending:false}).limit(20);
+  if(error){if(info)info.textContent=error.message;return}
+  const open=(data||[]).find(o=>(o.note||"").includes(openTableMarker()));
+  if(open){
+    counterOpenOrderId=open.id;
+    counterOpenItems=open.order_items||[];
+    counterOpenNote=(open.note||"").replace(openTableMarker(),"").replace(/^Ghi chú:\s*/,"").trim();
+    if(info)info.innerHTML=`🟢 <b>Bàn ${esc(counterOpenTable)} đang mở</b> • ${counterOpenItems.reduce((a,x)=>a+x.quantity,0)} món • ${money(openTableTotal())}`;
+  }else{
+    if(info)info.innerHTML=`⚪ Bàn ${esc(counterOpenTable)} chưa có đơn. Chọn món rồi bấm <b>Gửi món / In tem</b>.`;
+  }
+  renderCounterCart();
+  publishCustomerDisplay({mode:cart.length?"order":"idle"});
+}
+async function sendCounterItems(){
+  if(!counterOpenTable)return alert("Hãy chọn bàn trước.");
+  if(!cart.length)return alert("Chưa chọn món để gửi.");
+  if(!sb)return alert("Website chưa kết nối Supabase.");
+  const snapshot=cart.map(x=>({...x}));
+  const drinks=cupLabelItems(snapshot);
+  const labelWindow=drinks.length?openCupLabelWindow():null;
+  const staffNote=document.getElementById("counterNote")?.value.trim()||"";
+  let orderId=counterOpenOrderId;
+  if(!orderId){
+    orderId=Date.now();
+    const note=[openTableMarker(),staffNote?"Ghi chú: "+staffNote:""].filter(Boolean).join("\\n");
+    const {error}=await sb.from("orders").insert({id:orderId,table_number:counterOpenTable,status:"Mới",note,customer_token:null});
+    if(error){if(labelWindow)labelWindow.close();return alert(error.message)}
+    counterOpenOrderId=orderId;
+  }else if(staffNote){
+    const merged=[openTableMarker(),counterOpenNote?counterOpenNote:"",staffNote].filter(Boolean).join("\\n");
+    await sb.from("orders").update({note:merged,status:"Mới"}).eq("id",orderId);
+  }else{
+    await sb.from("orders").update({status:"Mới"}).eq("id",orderId);
+  }
+  const rows=snapshot.map(x=>({order_id:orderId,menu_item_id:x.menuItemId||null,item_name:x.name,price:x.unitPrice,quantity:x.qty}));
+  const r=await sb.from("order_items").insert(rows);
+  if(r.error){if(labelWindow)labelWindow.close();return alert(r.error.message)}
+  if(drinks.length)printCupLabels(labelWindow,orderId,snapshot,staffNote);
+  cart=[];setCart();
+  const noteEl=document.getElementById("counterNote");if(noteEl)noteEl.value="";
+  await loadOpenTable(counterOpenTable);
+  toggleMobileCounterCart(false);
+  alert(`Đã gửi món cho Bàn ${counterOpenTable}. Bàn vẫn mở để gọi thêm.`);
+}
+async function payOpenTable(){
+  if(!counterOpenTable)return alert("Hãy chọn bàn trước.");
+  if(cart.length)return alert("Giỏ đang có món chưa gửi. Hãy bấm “Gửi món / In tem” trước khi thanh toán.");
+  if(!counterOpenOrderId)return alert("Bàn này chưa có đơn để thanh toán.");
+  const total=openTableTotal();
+  let paymentText="";
+  if(counterPaymentMethod==="cash"){
+    const received=Number(document.getElementById("counterCashReceived")?.value||0);
+    if(received>0&&received<total)return alert("Số tiền khách đưa chưa đủ.");
+    paymentText=[paidMarker("cash"),received>0?"Khách đưa: "+money(received):"",received>0?"Tiền thừa: "+money(Math.max(0,received-total)):""].filter(Boolean).join("\\n");
+  }else paymentText=paidMarker("transfer")+"\\nMB BANK - 0976020701 - DINH THI MAI SEN";
+  const clean=(counterOpenNote||"").replace(openTableMarker(),"").trim();
+  const note=[clean,paymentText].filter(Boolean).join("\\n");
+  const {error}=await sb.from("orders").update({note,status:"Hoàn thành"}).eq("id",counterOpenOrderId);
+  if(error)return alert(error.message);
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"thanks",total,items:openTableDisplayItems(),payment:counterPaymentMethod,ts:Date.now()}));
+  const paidId=counterOpenOrderId;
+  counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";
+  const info=document.getElementById("counterOpenInfo");if(info)info.textContent=`✅ Bàn ${counterOpenTable} đã thanh toán.`;
+  const cash=document.getElementById("counterCashReceived");if(cash)cash.value="";
+  updateCounterPaymentUI();
+  if(confirm(`Đã thanh toán Bàn ${counterOpenTable}: ${money(total)}\\n\\nIn hóa đơn thanh toán?`))printBill(paidId);
+}
+
 function cupLabelItems(snapshot){
   return snapshot.filter(x=>{
     const m=menu.find(mi=>Number(mi.id)===Number(x.menuItemId));
@@ -3060,12 +3165,15 @@ function cdState(){
 }
 function publishCustomerDisplay(extra={}){
   if(isCustomerDisplay)return;
-  const total=counterCartTotal();
+  const total=counterGrandTotal();
   const received=Number(document.getElementById("counterCashReceived")?.value||0);
+  const existing=openTableDisplayItems();
+  const current=cart.map(x=>({name:x.name,unitPrice:Number(x.unitPrice||0),qty:Number(x.qty||0)}));
+  const allItems=[...existing,...current];
   const state={
     ts:Date.now(),
-    mode:cart.length?"order":"idle",
-    items:cart.map(x=>({name:x.name,unitPrice:Number(x.unitPrice||0),qty:Number(x.qty||0)})),
+    mode:allItems.length?"order":"idle",
+    items:allItems,
     total,
     payment:counterPaymentMethod,
     received,
