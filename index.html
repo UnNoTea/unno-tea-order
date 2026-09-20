@@ -2594,6 +2594,7 @@ function updateCounterPaymentUI(){
 let tableFloorOrders={};
 function isTableNumber(v){return /^\d+$/.test(String(v||"").trim())}
 function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:") || o.status==="Hoàn thành"}
+function isStaffCounterOrder(o){return (o?.note||"").includes("[NGUỒN: TẠI QUÁN]") && !(o?.note||"").includes("[NGUỒN: QR]")}
 
 
 async function getOccupiedTables(){
@@ -2928,12 +2929,16 @@ function handleRealtimeOrderChange(payload){
   const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
   if(!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
   if(payload?.eventType==="INSERT" && payload.new?.id!=null){
+    if(isStaffCounterOrder(payload.new)){
+      if(document.getElementById("tableFloorGrid"))setTimeout(refreshTableFloor,120);
+      return;
+    }
     if((payload.new?.note||"").includes("[NGUỒN: TẠI QUÁN]")){
       if(document.getElementById("tableFloorGrid"))setTimeout(refreshTableFloor,120);
       return;
     }
     const id=String(payload.new.id);
-    if(knownOrderIds && !knownOrderIds.has(id)){
+    if(knownOrderIds && !knownOrderIds.has(id) && !JSON.parse(localStorage.getItem("unno_seen_orders_v1")||"[]").includes(id)){
       knownOrderIds.add(id);
       showNewOrderAlert(1);
     }else if(!knownOrderIds){
@@ -2953,7 +2958,7 @@ async function renderOrders(view){
   if(error)return document.getElementById("adminView").innerHTML=`<div class="notice error">${esc(error.message)}</div>`;
   // Tab Đơn hàng/Bếp chỉ hiển thị đơn khách tự đặt qua QR hoặc Online.
   // Đơn nhân viên tạo tại quán được quản lý ở Sơ đồ bàn.
-  data=(data||[]).filter(o=>!(o.note||"").includes("[NGUỒN: TẠI QUÁN]"));
+  data=(data||[]).filter(o=>!isStaffCounterOrder(o));
   const ids=new Set((data||[]).map(o=>String(o.id)));
   if(knownOrderIds){
     const fresh=[...ids].filter(id=>!knownOrderIds.has(id));
