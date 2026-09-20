@@ -2036,6 +2036,26 @@ body:has(#ordersView:not([style*="display: none"])) .order-status,
 body:has(#ordersView:not([style*="display: none"])) .status-control,
 body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:none!important}
 </style>
+
+<style id="unno-hide-customer-status-v4231">
+/* Khách trên điện thoại: bỏ toàn bộ phần trạng thái trong "Đơn của tôi". */
+#myOrders .track-status,
+#myOrders .tracking-status,
+#myOrders .status,
+#myOrders .status-track,
+#myOrders .order-progress,
+#myOrders .tracking-progress,
+#myOrders [data-track-status],
+#myOrders [data-order-progress],
+#myOrderModal .track-status,
+#myOrderModal .tracking-status,
+#myOrderModal .status,
+#myOrderModal .status-track,
+#myOrderModal .order-progress,
+#myOrderModal .tracking-progress,
+#myOrderModal [data-track-status],
+#myOrderModal [data-order-progress]{display:none!important}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
