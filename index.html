@@ -2112,7 +2112,7 @@ function confirmOptions(){if(!pickVariant)return;let tops=pickToppings.map(id=>m
 function openCart(){document.getElementById("modal").classList.add("open");document.body.style.overflow="hidden";renderCart()}function closeCart(){document.getElementById("modal").classList.remove("open");document.body.style.overflow=""}
 function renderCart(){document.getElementById("cartItems").innerHTML=cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="chg(${i},-1)">−</button><span>${x.qty}</span><button onclick="chg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join("")||'<div class="empty">Chưa có món.</div>';document.getElementById("modalSum").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0))}
 function chg(i,d){let x=cart[i];if(!x)return;x.qty+=d;if(x.qty<1)cart.splice(i,1);setCart();renderCart()}
-async function placeOrder(){
+async function placeOrder(opts={}){
   if(!cart.length)return alert("Giỏ hàng trống.");
   if(!sb)return alert("Website chưa kết nối Supabase. Hãy điền config.js.");
   let note=document.getElementById("note").value.trim();
@@ -2154,13 +2154,14 @@ async function placeOrder(){
     document.getElementById("customerAddress").value="";
   }
   if(counterOrdering){
-    alert("Đã tạo đơn tại quầy!");
+    if(!opts.silentCounter)alert("Đã tạo đơn tại quầy!");
     renderCounter();
     toggleMobileCounterCart(false);
   }else{
     alert(orderMode==="delivery"?"Đã gửi đơn giao hàng! Quán sẽ liên hệ xác nhận.":orderMode==="pickup"?"Đã gửi đơn mang về! Quán sẽ liên hệ xác nhận.":"Đã gửi order thành công!");
     openMyOrders();
   }
+  return orderId;
 }
 
 function getTrackedOrders(){
@@ -2379,8 +2380,62 @@ function updateCounterPaymentUI(){
   const qr=document.getElementById("counterTransferQR");
   if(qr&&total>0)qr.src=counterVietQR(total);
 }
+function cupLabelItems(snapshot){
+  return snapshot.filter(x=>{
+    const m=menu.find(mi=>Number(mi.id)===Number(x.menuItemId));
+    return m && isDrinkCat(m.category);
+  });
+}
+function openCupLabelWindow(){
+  const w=window.open("","_blank","width=420,height=700");
+  if(w)w.document.write('<div style="font-family:Arial;padding:20px;text-align:center">Đang chuẩn bị tem cốc...</div>');
+  return w;
+}
+function printCupLabels(w,orderId,snapshot,staffNote=""){
+  const drinks=cupLabelItems(snapshot);
+  if(!drinks.length){ if(w)w.close(); return; }
+  if(!w)return alert("Trình duyệt đang chặn cửa sổ in tem. Hãy cho phép pop-up cho trang UnNo Tea.");
+  let labels=[];
+  drinks.forEach(x=>{
+    for(let n=1;n<=x.qty;n++){
+      let parts=String(x.name||"").split(" • ");
+      let main=parts.shift()||"";
+      let extras=parts.join(" • ");
+      let size="";
+      main=main.replace(/\s*\(([^)]+)\)\s*$/,(_,v)=>{size=v;return ""}).trim();
+      labels.push(`<section class="label">
+        <div class="top"><b>UnNo Tea</b><span>#${orderId}</span></div>
+        <div class="name">${esc(main)}</div>
+        ${size?`<div class="size">SIZE ${esc(size)}</div>`:""}
+        ${extras?`<div class="extra">+ ${esc(extras)}</div>`:""}
+        ${staffNote?`<div class="note">${esc(staffNote)}</div>`:""}
+        <div class="bottom"><b>TẠI QUẦY</b><span>${n}/${x.qty} • ${new Date().toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})}</span></div>
+      </section>`);
+    }
+  });
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Tem cốc • UnNo Tea</title>
+  <style>
+    @page{size:50mm 30mm;margin:0}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:Arial,sans-serif;color:#000}
+    .label{width:50mm;height:30mm;padding:2.2mm 2.5mm;page-break-after:always;overflow:hidden;display:flex;flex-direction:column}
+    .label:last-child{page-break-after:auto}
+    .top,.bottom{display:flex;justify-content:space-between;align-items:center;font-size:8pt;line-height:1}
+    .top b{font-size:10pt}.name{font-size:13.5pt;font-weight:900;line-height:1.02;margin:1.7mm 0 .7mm;text-transform:uppercase}
+    .size{font-size:10pt;font-weight:900}.extra{font-size:8.5pt;font-weight:700;margin-top:.6mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .note{font-size:8pt;font-weight:700;border-top:.25mm dashed #000;margin-top:.7mm;padding-top:.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .bottom{margin-top:auto;border-top:.25mm solid #000;padding-top:.8mm}
+  </style></head><body>${labels.join("")}
+  <script>window.onload=()=>setTimeout(()=>{window.focus();window.print();},180);<\/script>
+  </body></html>`);
+  w.document.close();
+}
 async function submitCounterOrder(){
   if(!cart.length)return alert("Chưa chọn món.");
+  const orderSnapshot=cart.map(x=>({...x}));
+  const drinkSnapshot=cupLabelItems(orderSnapshot);
+  const labelWindow=drinkSnapshot.length?openCupLabelWindow():null;
   const total=counterCartTotal();
   let paymentText="";
   if(counterPaymentMethod==="cash"){
@@ -2398,7 +2453,9 @@ async function submitCounterOrder(){
   const noteEl=document.getElementById("counterNote");
   const staffNote=noteEl?noteEl.value.trim():"";
   document.getElementById("note").value=[staffNote,paymentText].filter(Boolean).join("\n");
-  await placeOrder();
+  const createdOrderId=await placeOrder({silentCounter:true});
+  if(!createdOrderId){ if(labelWindow)labelWindow.close(); return; }
+  if(drinkSnapshot.length)printCupLabels(labelWindow,createdOrderId,orderSnapshot,staffNote);
   localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify(completedState));
 }
 
