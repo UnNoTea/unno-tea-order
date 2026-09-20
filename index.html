@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111"><title>UnNo Tea • Order</title>
-<!-- V4.12.2 Customer Display + 3 Animated Banners --><link rel="icon" href="logo.jpg">
+<!-- V4.12.1 FIX Customer Display --><link rel="icon" href="logo.jpg">
 <style>
 :root{--bg:#f5f3ee;--card:#fff;--ink:#111;--muted:#747474;--line:#e5e1d8;--soft:#efede7;--ok:#1f7a45;--danger:#b42318}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -1894,27 +1894,6 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 @media(max-width:900px){.cd-idle-inner{grid-template-columns:1fr 1fr}.cd-order{padding:18px}.cd-order-body{grid-template-columns:1fr 32%;gap:15px}.cd-item{grid-template-columns:48px 1fr 50px 100px;gap:8px}.cd-item-name{font-size:15px}.cd-summary{padding:18px}.cd-pay{padding:20px}}
 </style>
 
-
-<style id="unno-banner-carousel-v2">
-.cd-idle{background:#071b12!important}
-.cd-banner-stage{position:absolute;inset:0;overflow:hidden;background:#071b12}
-.cd-banner-slide{
-  position:absolute;inset:-1.5%;width:103%;height:103%;object-fit:cover;
-  opacity:0;transform:scale(1.035);
-  transition:opacity 1.15s ease,transform 6.5s ease;
-  filter:saturate(1.03) contrast(1.02)
-}
-.cd-banner-slide.active{opacity:1;transform:scale(1)}
-.cd-banner-dots{
-  position:absolute;left:50%;bottom:22px;transform:translateX(-50%);
-  display:flex;gap:10px;padding:8px 12px;border-radius:999px;background:#0005;
-  backdrop-filter:blur(8px)
-}
-.cd-banner-dots i{display:block;width:9px;height:9px;border-radius:50%;background:#ffffff66;transition:.35s}
-.cd-banner-dots i.active{width:27px;border-radius:8px;background:#fff}
-#cdIdle:not(.active) .cd-banner-slide{opacity:0!important;transform:scale(1.055)!important}
-</style>
-
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1970,11 +1949,14 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 
 <div id="customerDisplay" aria-live="polite">
   <section id="cdIdle" class="cd-screen cd-idle active">
-    <div class="cd-banner-stage">
-      <img class="cd-banner-slide active" src="banner-1.jpg" alt="UnNo Tea banner 1">
-      <img class="cd-banner-slide" src="banner-2.jpg" alt="UnNo Tea banner 2">
-      <img class="cd-banner-slide" src="banner-3.jpg" alt="UnNo Tea banner 3">
-      <div class="cd-banner-dots"><i class="active"></i><i></i><i></i></div>
+    <div class="cd-idle-bg"></div>
+    <div class="cd-idle-inner">
+      <div>
+        <div class="cd-brand">UnNo Tea<span>MORE THAN JUST TEA • EST. 2021</span></div>
+        <div class="cd-slogan">Một chút trà • Một chút vui<br>Cho ngày thêm tươi!</div>
+        <div class="cd-chips"><span class="cd-chip">TRÀ SỮA</span><span class="cd-chip">TRÀ TRÁI CÂY</span><span class="cd-chip">ĐỒ ĂN VẶT</span></div>
+      </div>
+      <div id="cdShowcase" class="cd-showcase"><img src="logo.jpg"><img src="logo.jpg"></div>
     </div>
   </section>
   <section id="cdOrder" class="cd-screen cd-order">
@@ -2909,18 +2891,11 @@ function renderCustomerDisplay(state=cdState()){
 function initCustomerDisplay(){
   document.body.classList.add("customer-display-mode");
   document.getElementById("customerDisplay")?.classList.add("cd-show");
-  const slides=[...document.querySelectorAll(".cd-banner-slide")];
-  const dots=[...document.querySelectorAll(".cd-banner-dots i")];
-  let bannerIndex=0;
-  if(slides.length){
-    setInterval(()=>{
-      if(!document.getElementById("cdIdle")?.classList.contains("active"))return;
-      slides[bannerIndex]?.classList.remove("active");
-      dots[bannerIndex]?.classList.remove("active");
-      bannerIndex=(bannerIndex+1)%slides.length;
-      slides[bannerIndex]?.classList.add("active");
-      dots[bannerIndex]?.classList.add("active");
-    },5200);
+  const pics=(menu||[]).filter(x=>x.available!==false&&x.img&&x.img!=="logo.jpg").slice(0,12);
+  if(pics.length){
+    const box=document.getElementById("cdShowcase");
+    box.innerHTML=`<img id="cdPicA" src="${esc(pics[0].img)}"><img id="cdPicB" src="${esc((pics[1]||pics[0]).img)}">`;
+    let n=2;setInterval(()=>{if(!pics.length)return;const el=document.getElementById(n%2?"cdPicB":"cdPicA");if(el)el.src=pics[n%pics.length].img;n++},4500);
   }
   renderCustomerDisplay();
   window.addEventListener("storage",e=>{if(e.key===CUSTOMER_DISPLAY_KEY&&e.newValue){try{renderCustomerDisplay(JSON.parse(e.newValue))}catch(_){}}});
