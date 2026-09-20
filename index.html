@@ -1852,6 +1852,47 @@ body.admin-mode.counter-view .transfer-preview .bank-line{
 .sold-out-card .add:disabled{background:#777!important;color:#fff!important;opacity:1!important;cursor:not-allowed}
 </style>
 
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#111111"><meta name="application-name" content="UnNo Tea">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="UnNo Tea"><link rel="apple-touch-icon" href="/icon-192.png">
+
+<style id="unno-customer-display-v1">
+#customerDisplay{display:none;position:fixed;inset:0;z-index:20000;background:#f5f1e8;color:#123b2b;overflow:hidden;font-family:Arial,sans-serif}
+body.customer-display-mode{overflow:hidden;background:#0d241a}
+body.customer-display-mode> :not(#customerDisplay):not(script):not(style){display:none!important}
+#customerDisplay.cd-show{display:block}
+.cd-screen{position:absolute;inset:0;opacity:0;transform:scale(1.015);pointer-events:none;transition:opacity .65s ease,transform .8s ease}
+.cd-screen.active{opacity:1;transform:scale(1);pointer-events:auto}
+.cd-idle{background:#102a1e;color:#fff}
+.cd-idle-bg{position:absolute;inset:0;background:radial-gradient(circle at 75% 30%,#456f55 0,transparent 35%),linear-gradient(120deg,#0b2117,#173c2a 62%,#0d271b);transition:opacity .7s ease,transform 1.2s ease}
+.cd-idle.active .cd-idle-bg{opacity:1;transform:scale(1)}
+.cd-idle:not(.active) .cd-idle-bg{opacity:.15;transform:scale(1.06)}
+.cd-idle-inner{position:relative;height:100%;display:grid;grid-template-columns:44% 56%;align-items:center;padding:5vw}
+.cd-brand{font-size:clamp(42px,6vw,88px);font-weight:900;letter-spacing:-3px}.cd-brand span{font-size:.38em;display:block;font-weight:500;letter-spacing:1px;margin-top:8px}
+.cd-slogan{font-size:clamp(20px,2.2vw,34px);line-height:1.35;margin-top:38px;max-width:540px;font-style:italic}
+.cd-chips{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}.cd-chip{border:1px solid #ffffff55;border-radius:999px;padding:10px 16px;font-weight:700}
+.cd-showcase{height:76vh;display:grid;grid-template-columns:repeat(2,1fr);gap:18px;transform:rotate(2deg)}
+.cd-showcase img{width:100%;height:100%;object-fit:cover;border-radius:30px;box-shadow:0 24px 70px #0006;background:#fff}
+.cd-showcase img:nth-child(2){transform:translateY(45px)}
+.cd-order{background:#f7f4ed;padding:28px 34px}
+.cd-top{height:80px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d8ddd6}
+.cd-logo{font-size:32px;font-weight:900}.cd-logo small{font-size:12px;display:block;font-weight:600;letter-spacing:1px}
+.cd-title{text-align:right}.cd-title b{font-size:28px}.cd-title div{font-size:14px;color:#6b766f;margin-top:4px}
+.cd-order-body{height:calc(100% - 80px);display:grid;grid-template-columns:minmax(0,1fr) 34%;gap:28px;padding-top:24px}
+.cd-items{overflow:auto;padding-right:8px}.cd-item{display:grid;grid-template-columns:64px minmax(0,1fr) 70px 125px;align-items:center;gap:14px;padding:13px 8px;border-bottom:1px solid #dfe3df}
+.cd-item-no{width:42px;height:42px;border-radius:13px;background:#e6eee8;display:grid;place-items:center;font-weight:900}.cd-item-name{font-size:18px;font-weight:800}.cd-item-sub{font-size:13px;color:#79827d;margin-top:4px}.cd-item-qty{text-align:center;font-size:20px;font-weight:900}.cd-item-price{text-align:right;font-size:18px;font-weight:900}
+.cd-summary{background:#123b2b;color:#fff;border-radius:24px;padding:24px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 18px 50px #173b2b22}
+.cd-summary-label{font-size:17px;opacity:.8}.cd-total{font-size:clamp(42px,5vw,72px);font-weight:900;letter-spacing:-2px;margin:8px 0 22px}.cd-summary-note{font-size:16px;line-height:1.5;opacity:.9}
+.cd-pay{background:#f7f4ed;padding:34px}.cd-pay-inner{height:100%;display:grid;grid-template-columns:48% 52%;align-items:center;gap:34px;max-width:1200px;margin:auto}
+.cd-pay-card{background:#fff;border-radius:28px;padding:26px;text-align:center;box-shadow:0 18px 60px #173b2b18}.cd-pay-card img{width:min(330px,60vh);max-width:100%;border-radius:18px}.cd-bank{font-weight:900;font-size:20px;margin-top:10px}.cd-account{font-size:15px;color:#66736b;margin-top:6px}
+.cd-pay-info h1{font-size:clamp(32px,4vw,60px);margin:0 0 16px}.cd-pay-total{font-size:clamp(52px,6vw,86px);font-weight:900;color:#123b2b;letter-spacing:-3px}.cd-pay-hint{font-size:20px;color:#637069;line-height:1.5;margin-top:20px}
+.cd-cash-grid{display:grid;gap:14px;margin-top:25px}.cd-cash-row{background:#fff;border-radius:18px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;font-size:20px}.cd-cash-row b{font-size:28px}.cd-cash-row.change{background:#123b2b;color:#fff}
+.cd-thanks{background:radial-gradient(circle at 50% 30%,#fff,#f4eddb);display:grid;place-items:center;text-align:center}.cd-thanks .heart{font-size:62px;animation:cdPulse 1s ease infinite}.cd-thanks h1{font-size:clamp(50px,7vw,100px);margin:10px 0;color:#123b2b}.cd-thanks p{font-size:24px;color:#657068}.cd-thanks .brand{font-size:30px;font-weight:900;margin-top:28px}
+@keyframes cdPulse{50%{transform:scale(1.12)}}
+@media(max-width:900px){.cd-idle-inner{grid-template-columns:1fr 1fr}.cd-order{padding:18px}.cd-order-body{grid-template-columns:1fr 32%;gap:15px}.cd-item{grid-template-columns:48px 1fr 50px 100px;gap:8px}.cd-item-name{font-size:15px}.cd-summary{padding:18px}.cd-pay{padding:20px}}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1904,6 +1945,27 @@ body.admin-mode.counter-view .transfer-preview .bank-line{
 <div id="modal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><h2>Giỏ hàng</h2><button class="close" onclick="closeCart()">×</button></div><div id="cartItems"></div><label>Ghi chú cho quán</label><textarea id="note" placeholder="Ít đá, ít đường, thời gian muốn nhận..."></textarea><div class="total"><span>Tổng</span><span id="modalSum">0đ</span></div><button id="placeOrderBtn" class="primary" onclick="placeOrder()">Gửi order</button></div></div>
 <div id="ordersModal" class="modal"><div class="sheet"><div class="handle"></div><div class="sheethead"><div><h2 style="margin:0">📋 Đơn của tôi</h2><div class="small">Tự cập nhật trạng thái từ quán</div></div><button class="close" onclick="closeMyOrders()">×</button></div><div id="myOrdersList"><div class="empty">Chưa có đơn nào trên máy này.</div></div></div></div>
 
+
+<div id="customerDisplay" aria-live="polite">
+  <section id="cdIdle" class="cd-screen cd-idle active">
+    <div class="cd-idle-bg"></div>
+    <div class="cd-idle-inner">
+      <div>
+        <div class="cd-brand">UnNo Tea<span>MORE THAN JUST TEA • EST. 2021</span></div>
+        <div class="cd-slogan">Một chút trà • Một chút vui<br>Cho ngày thêm tươi!</div>
+        <div class="cd-chips"><span class="cd-chip">TRÀ SỮA</span><span class="cd-chip">TRÀ TRÁI CÂY</span><span class="cd-chip">ĐỒ ĂN VẶT</span></div>
+      </div>
+      <div id="cdShowcase" class="cd-showcase"><img src="logo.jpg"><img src="logo.jpg"></div>
+    </div>
+  </section>
+  <section id="cdOrder" class="cd-screen cd-order">
+    <div class="cd-top"><div class="cd-logo">UnNo Tea<small>MORE THAN JUST TEA</small></div><div class="cd-title"><b>ĐƠN HÀNG CỦA BẠN</b><div>Cảm ơn bạn đã chọn UnNo Tea!</div></div></div>
+    <div class="cd-order-body"><div id="cdItems" class="cd-items"></div><aside class="cd-summary"><div><div class="cd-summary-label">TỔNG THANH TOÁN</div><div id="cdTotal" class="cd-total">0đ</div></div><div class="cd-summary-note">Bạn kiểm tra lại món giúp UnNo Tea nhé ♥<br><br><b>Good Tea • Good Mood</b></div></aside></div>
+  </section>
+  <section id="cdPay" class="cd-screen cd-pay"><div id="cdPayInner" class="cd-pay-inner"></div></section>
+  <section id="cdThanks" class="cd-screen cd-thanks"><div><div class="heart">♥</div><h1>Cảm ơn quý khách!</h1><p>UnNo Tea chúc bạn một ngày thật nhiều niềm vui.</p><div class="brand">UnNo Tea • Hẹn gặp lại!</div></div></section>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="config.js"></script>
@@ -1911,6 +1973,7 @@ body.admin-mode.counter-view .transfer-preview .bank-line{
 const cfg=window.UNO_CONFIG||{}; const ready=cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_URL.includes("PASTE_");
 const sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const params=new URLSearchParams(location.search);
+const isCustomerDisplay=params.get("display")==="1";
 const pathName=location.pathname.replace(/\/+$/,"").toLowerCase();
 const isAdminPath=pathName==="/admin";
 const isOnlinePath=pathName==="/online";
@@ -2187,7 +2250,7 @@ function renderCounter(){
     <div class="panel" style="margin-bottom:11px">
       <div class="row">
         <div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Nhân viên chọn món và tạo đơn trực tiếp cho khách tại quầy.</div></div>
-        <button class="tab" onclick="clearCounterCart()">🗑 Xóa giỏ</button>
+        <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="tab" onclick="window.open('/?display=1','unnoCustomerDisplay','width=1100,height=650')">🖥 Màn hình khách</button><button class="tab" onclick="clearCounterCart()">🗑 Xóa giỏ</button></div>
       </div>
     </div>
     <div class="counter-wrap">
@@ -2257,9 +2320,10 @@ function renderCounterCart(){
   box.innerHTML=cart.length?cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join(""):'<div class="counter-empty-visual"><div class="counter-empty-icon">🛒</div><div>Chưa chọn món.</div></div>';
   document.getElementById("counterTotal").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0));
   updateCounterPaymentUI();
+  publishCustomerDisplay();
 }
 function counterChg(i,d){let x=cart[i];if(!x)return;x.qty+=d;if(x.qty<1)cart.splice(i,1);sessionStorage.setItem("uno_cart",JSON.stringify(cart));renderCounterCart()}
-function clearCounterCart(){if(cart.length&&!confirm("Xóa toàn bộ giỏ tại quầy?"))return;cart=[];sessionStorage.setItem("uno_cart","[]");renderCounterCart()}
+function clearCounterCart(){if(cart.length&&!confirm("Xóa toàn bộ giỏ tại quầy?"))return;cart=[];sessionStorage.setItem("uno_cart","[]");renderCounterCart();publishCustomerDisplay({mode:"idle"})}
 let counterPaymentMethod="cash";
 function counterCartTotal(){return cart.reduce((a,x)=>a+x.unitPrice*x.qty,0)}
 function setCounterPayment(method){
@@ -2270,6 +2334,7 @@ function setCounterPayment(method){
   if(cash)cash.style.display=method==="cash"?"grid":"none";
   if(transfer)transfer.style.display=method==="transfer"?"block":"none";
   updateCounterPaymentUI();
+  publishCustomerDisplay({mode:cart.length?"payment":"idle"});
 }
 function counterVietQR(amount,orderCode=""){
   const info=orderCode?`UNNO ${orderCode}`:"THANH TOAN UNNO";
@@ -2279,6 +2344,7 @@ function updateCounterChange(){
   const total=counterCartTotal(),received=Number(document.getElementById("counterCashReceived")?.value||0);
   const el=document.getElementById("counterChange");
   if(el)el.textContent=money(Math.max(0,received-total));
+  if(counterOrdering && cart.length)publishCustomerDisplay({mode:counterPaymentMethod==="cash"&&received>0?"payment":"order"});
 }
 function updateCounterPaymentUI(){
   const total=counterCartTotal();
@@ -2303,10 +2369,12 @@ async function submitCounterOrder(){
   }else{
     paymentText="[THANH TOÁN: CHUYỂN KHOẢN]\\nMB BANK - 0976020701 - DINH THI MAI SEN";
   }
+  const completedState={mode:"thanks",total,items:cart.map(x=>({name:x.name,unitPrice:x.unitPrice,qty:x.qty})),payment:counterPaymentMethod,ts:Date.now()};
   const noteEl=document.getElementById("counterNote");
   const staffNote=noteEl?noteEl.value.trim():"";
   document.getElementById("note").value=[staffNote,paymentText].filter(Boolean).join("\n");
   await placeOrder();
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify(completedState));
 }
 
 let knownOrderIds=null,newOrderUnread=0,audioCtx=null;
@@ -2530,7 +2598,8 @@ async function printBill(id){
     <script>
       window.onload=()=>setTimeout(()=>window.print(),${payment==="CHUYỂN KHOẢN"?"700":"250"});
     <\/script>
-  </body></html>`);
+  <script id="unno-pwa-register">if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}</script>
+</body></html>`);
   w.document.close();
 }
 async function advance(id,status){let {error}=await sb.from("orders").update({status}).eq("id",id);if(error)alert(error.message);else showAdmin(adminView)}
@@ -2774,8 +2843,71 @@ document.getElementById("modal").addEventListener("click",e=>{if(e.target===e.cu
 document.getElementById("ordersModal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeMyOrders()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();closeCart();closeMyOrders()}});
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
-if(isAdminPath || params.get("admin")==="1"){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
-if(sb){loadMenu();channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload)).subscribe()}else{loadMenu();document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
+
+const CUSTOMER_DISPLAY_KEY="unno_customer_display_v1";
+let cdThanksTimer=null;
+function cdState(){
+  try{return JSON.parse(localStorage.getItem(CUSTOMER_DISPLAY_KEY)||"{}")}catch(e){return {}}
+}
+function publishCustomerDisplay(extra={}){
+  if(isCustomerDisplay)return;
+  const total=counterCartTotal();
+  const received=Number(document.getElementById("counterCashReceived")?.value||0);
+  const state={
+    ts:Date.now(),
+    mode:cart.length?"order":"idle",
+    items:cart.map(x=>({name:x.name,unitPrice:Number(x.unitPrice||0),qty:Number(x.qty||0)})),
+    total,
+    payment:counterPaymentMethod,
+    received,
+    change:Math.max(0,received-total),
+    ...extra
+  };
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify(state));
+}
+function cdActivate(id){
+  ["cdIdle","cdOrder","cdPay","cdThanks"].forEach(x=>document.getElementById(x)?.classList.toggle("active",x===id));
+}
+function renderCustomerDisplay(state=cdState()){
+  if(!isCustomerDisplay)return;
+  if(state.mode==="thanks"){cdActivate("cdThanks");clearTimeout(cdThanksTimer);cdThanksTimer=setTimeout(()=>{localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"idle",ts:Date.now()}));renderCustomerDisplay({mode:"idle"})},4500);return}
+  if(state.mode==="payment"){
+    cdActivate("cdPay");
+    const total=Number(state.total||0), received=Number(state.received||0), change=Number(state.change||0);
+    const box=document.getElementById("cdPayInner");
+    if(state.payment==="transfer"){
+      box.innerHTML=`<div class="cd-pay-card"><img src="${counterVietQR(total)}" alt="QR thanh toán"><div class="cd-bank">MB BANK • 0976020701</div><div class="cd-account">DINH THI MAI SEN</div></div><div class="cd-pay-info"><h1>QUÉT MÃ ĐỂ THANH TOÁN</h1><div class="cd-pay-total">${money(total)}</div><div class="cd-pay-hint">Vui lòng kiểm tra đúng số tiền trước khi chuyển khoản.<br>Cảm ơn bạn đã ủng hộ UnNo Tea! ♥</div></div>`;
+    }else{
+      box.innerHTML=`<div class="cd-pay-info" style="grid-column:1/-1;max-width:850px;margin:auto;width:100%"><h1>THANH TOÁN TIỀN MẶT</h1><div class="cd-cash-grid"><div class="cd-cash-row"><span>Tổng tiền</span><b>${money(total)}</b></div><div class="cd-cash-row"><span>Khách đưa</span><b>${money(received)}</b></div><div class="cd-cash-row change"><span>Tiền thừa</span><b>${money(change)}</b></div></div><div class="cd-pay-hint">Cảm ơn bạn đã chọn UnNo Tea!</div></div>`;
+    }
+    return;
+  }
+  if(state.items&&state.items.length){
+    cdActivate("cdOrder");
+    document.getElementById("cdItems").innerHTML=state.items.map((x,i)=>`<div class="cd-item"><div class="cd-item-no">${i+1}</div><div><div class="cd-item-name">${esc(x.name)}</div><div class="cd-item-sub">${money(x.unitPrice)} / món</div></div><div class="cd-item-qty">×${x.qty}</div><div class="cd-item-price">${money(x.unitPrice*x.qty)}</div></div>`).join("");
+    document.getElementById("cdTotal").textContent=money(Number(state.total||0));
+  }else cdActivate("cdIdle");
+}
+function initCustomerDisplay(){
+  document.body.classList.add("customer-display-mode");
+  document.getElementById("customerDisplay")?.classList.add("cd-show");
+  const pics=(menu||[]).filter(x=>x.available!==false&&x.img&&x.img!=="logo.jpg").slice(0,12);
+  if(pics.length){
+    const box=document.getElementById("cdShowcase");
+    box.innerHTML=`<img id="cdPicA" src="${esc(pics[0].img)}"><img id="cdPicB" src="${esc((pics[1]||pics[0]).img)}">`;
+    let n=2;setInterval(()=>{if(!pics.length)return;const el=document.getElementById(n%2?"cdPicB":"cdPicA");if(el)el.src=pics[n%pics.length].img;n++},4500);
+  }
+  renderCustomerDisplay();
+  window.addEventListener("storage",e=>{if(e.key===CUSTOMER_DISPLAY_KEY&&e.newValue){try{renderCustomerDisplay(JSON.parse(e.newValue))}catch(_){}}});
+}
+
+if(isCustomerDisplay){
+  document.getElementById("customer").style.display="none";
+  document.getElementById("admin").style.display="none";
+  document.getElementById("cartBar").style.display="none";
+}
+if(!isCustomerDisplay && (isAdminPath || params.get("admin")==="1")){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
+if(sb){loadMenu().then(()=>{if(isCustomerDisplay)initCustomerDisplay()});if(!isCustomerDisplay)channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload)).subscribe()}else{loadMenu().then(()=>{if(isCustomerDisplay)initCustomerDisplay()});if(!isCustomerDisplay)document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
 
 setInterval(()=>{
   const om=document.getElementById("ordersModal");
