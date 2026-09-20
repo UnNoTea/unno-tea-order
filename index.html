@@ -2613,7 +2613,7 @@ function updateCounterPaymentUI(){
 
 let tableFloorOrders={};
 function isTableNumber(v){return /^\d+$/.test(String(v||"").trim())}
-function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:") || o.status==="Hoàn thành"}
+function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:")}
 function isStaffCounterOrder(o){return (o?.note||"").includes("[NGUỒN: TẠI QUÁN]") && !(o?.note||"").includes("[NGUỒN: QR]")}
 
 function isNotifyOrder(o){
@@ -2631,6 +2631,16 @@ function qrAddEventNote(note){
   return [note,`${QR_ADD_EVENT_PREFIX}${Date.now()}]`].filter(Boolean).join("\n");
 }
 let lastQrAddEventSeen="";
+
+const QR_EVENT_SEEN_KEY="unno_seen_qr_add_events_v1";
+let qrEventBaselineReady=false;
+function getSeenQrEvents(){try{return new Set(JSON.parse(localStorage.getItem(QR_EVENT_SEEN_KEY)||"[]"))}catch(e){return new Set()}}
+function saveSeenQrEvents(set){try{localStorage.setItem(QR_EVENT_SEEN_KEY,JSON.stringify([...set].slice(-500)))}catch(e){}}
+function qrEventId(o){
+  const m=String(o?.note||"").match(/\[QR GỌI THÊM:([^\]]+)\]/);
+  return m?String(o.id)+":"+m[1]:"";
+}
+
 
 const recentNewOrderAlerts=new Map();
 const recentItemAlerts=new Map();
@@ -2968,6 +2978,11 @@ function dismissNewOrderAlert(){
   const seen=getSeenNotifyIds();
   if(knownOrderIds)knownOrderIds.forEach(id=>seen.add(String(id)));
   saveSeenNotifyIds(seen);
+  try{
+    const qseen=getSeenQrEvents();
+    if(lastQrAddEventSeen)qseen.add(lastQrAddEventSeen);
+    saveSeenQrEvents(qseen);
+  }catch(e){}
   newOrderUnread=0;
   const a=document.getElementById("newOrderAlert"),c=document.getElementById("newOrderCount");
   if(a)a.classList.remove("show");
@@ -2984,23 +2999,28 @@ async function checkNewOrdersInBackground(){
     if(error)return;
     const eligible=(data||[]).filter(isNotifyOrder);
     const ids=new Set(eligible.map(o=>String(o.id)));
-    let newestQrEvt="";
-    for(const o of eligible){
-      const m=String(o.note||"").match(/\[QR GỌI THÊM:([^\]]+)\]/);
-      if(m){newestQrEvt=String(o.id)+":"+m[1];break}
-    }
-    if(lastQrAddEventSeen && newestQrEvt && newestQrEvt!==lastQrAddEventSeen){
-      lastQrAddEventSeen=newestQrEvt;
-      showNewOrderAlert(1);
-    }else if(!lastQrAddEventSeen && newestQrEvt){
-      lastQrAddEventSeen=newestQrEvt;
-    }
     const seen=getSeenNotifyIds();
+
     if(knownOrderIds){
       const fresh=[...ids].filter(id=>!knownOrderIds.has(id)&&!seen.has(id));
       if(fresh.length)showNewOrderAlert(fresh.length);
     }
     knownOrderIds=ids;
+
+    const qrSeen=getSeenQrEvents();
+    const currentEvents=eligible.map(qrEventId).filter(Boolean);
+    if(!qrEventBaselineReady){
+      currentEvents.forEach(e=>qrSeen.add(e));
+      saveSeenQrEvents(qrSeen);
+      qrEventBaselineReady=true;
+    }else{
+      const freshEvents=currentEvents.filter(e=>!qrSeen.has(e));
+      if(freshEvents.length){
+        freshEvents.forEach(e=>qrSeen.add(e));
+        saveSeenQrEvents(qrSeen);
+        showNewOrderAlert(freshEvents.length);
+      }
+    }
   }catch(e){}
 }
 function handleRealtimeOrderChange(payload){
@@ -3017,11 +3037,13 @@ function handleRealtimeOrderChange(payload){
     }
   }
   if(payload?.eventType==="UPDATE" && payload.new?.id!=null && isNotifyOrder(payload.new)){
-    const m=String(payload.new.note||"").match(/\[QR GỌI THÊM:([^\]]+)\]/);
-    const evt=m?String(payload.new.id)+":"+m[1]:"";
-    if(evt && evt!==lastQrAddEventSeen){
-      lastQrAddEventSeen=evt;
-      showNewOrderAlert(1);
+    const evt=qrEventId(payload.new);
+    if(evt){
+      const qrSeen=getSeenQrEvents();
+      if(!qrSeen.has(evt)){
+        qrSeen.add(evt);saveSeenQrEvents(qrSeen);
+        showNewOrderAlert(1);
+      }
     }
   }
   if(adminView==="orders"||adminView==="kitchen")renderOrders(adminView);
@@ -3039,14 +3061,18 @@ async function renderOrders(view){
   const ids=new Set((data||[]).map(o=>String(o.id)));
   if(!knownOrderIds)knownOrderIds=ids;
   else ids.forEach(id=>knownOrderIds.add(id));
-  document.getElementById("adminView").innerHTML=`<div class="orders">${(data||[]).map(orderCard).join("")||'<div class="empty">Chưa có đơn.</div>'}</div>`;
+  document.getElementById("adminView").innerHTML=`<div class="orders">${(data||[]).map(o=>orderCard(o,view)).join("")||'<div class="empty">Chưa có đơn.</div>'}</div>`;
 }
-function orderCard(o){
+function orderCard(o,view){
   let total=(o.order_items||[]).reduce((a,i)=>a+i.price*i.quantity,0);
   let next=o.status==="Mới"?"Đang làm":o.status==="Đang làm"?"Hoàn thành":"";
   let label=o.table_number==="GIAO HÀNG"?"🚚 Giao hàng":o.table_number==="MANG VỀ"?"🥡 Mang về":o.table_number==="TẠI QUẦY"?"🧾 Tại quầy":"Bàn "+esc(o.table_number);
-  return `<article class="order"><h3>${label}</h3><div class="status">${esc(o.status)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div><ul>${(o.order_items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity}</li>`).join("")}</ul>${o.note?`<div class="small" style="white-space:pre-line"><b>Thông tin:</b>
-${esc(o.note)}</div>`:""}<div class="row mt"><b>${money(total)}</b></div><div class="actions">${next?`<button class="next" onclick="advance(${o.id},'${next}')">${next}</button>`:""}<button class="billbtn" onclick="printBill(${o.id})">🧾 In hóa đơn chuyên nghiệp</button><button onclick="delOrder(${o.id})">Xóa</button></div></article>`
+  const statusLine=view==="orders"
+    ? `<div class="small">${new Date(o.created_at).toLocaleString("vi-VN")}</div>`
+    : `<div class="status">${esc(o.status)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div>`;
+  const workflowButton=view==="orders"?"":(next?`<button class="next" onclick="advance(${o.id},'${next}')">${next}</button>`:"");
+  return `<article class="order"><h3>${label}</h3>${statusLine}<ul>${(o.order_items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity}</li>`).join("")}</ul>${o.note?`<div class="small" style="white-space:pre-line"><b>Thông tin:</b>
+${esc(o.note)}</div>`:""}<div class="row mt"><b>${money(total)}</b></div><div class="actions">${workflowButton}<button class="billbtn" onclick="printBill(${o.id})">🧾 In hóa đơn chuyên nghiệp</button><button onclick="delOrder(${o.id})">Xóa</button></div></article>`
 }
 
 async function printBill(id){
