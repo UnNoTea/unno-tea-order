@@ -2436,19 +2436,16 @@ async function loadMyOrders(){
     localStorage.setItem(trackedKey,JSON.stringify([latestTracked]));
   }
   const o=latest;
-  const idx=statusIndex(o.status);
-  const sv=customerStatusVisual(o.status);
   const total=(o.items||[]).reduce((a,i)=>a+Number(i.price||0)*Number(i.quantity||0),0);
+  const customerNote=String(o.note||"").split("\n").filter(x=>
+    !x.startsWith("[NGUỒN:") &&
+    !x.startsWith("[QR GỌI THÊM:") &&
+    !x.startsWith("[CHƯA THANH TOÁN]")
+  ).join("\n").trim();
   box.innerHTML=`<div class="myorder">
       <div class="myorder-head"><div><b>${customerOrderLabel(o)}</b><div class="small">Mã #${esc(o.id)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div></div></div>
-      <div class="customer-status-box ${sv.cls}">
-        <div class="customer-status-icon">${sv.icon}</div>
-        <div><div class="customer-status-title">${sv.title}</div><div class="customer-status-sub">${sv.sub}</div></div>
-      </div>
-      <div class="progress"><div class="progress-step ${idx>=1?'on':''}"></div><div class="progress-step ${idx>=2?'on':''}"></div><div class="progress-step ${idx>=3?'on':''}"></div></div>
-      <div class="progress-labels"><span>Đã gửi</span><span>Đang làm</span><span>Hoàn thành</span></div>
       <ul class="myorder-items">${(o.items||[]).map(i=>`<li>${esc(i.item_name)} × ${i.quantity} — ${money(Number(i.price||0)*Number(i.quantity||0))}</li>`).join("")}</ul>
-      <div class="row"><span class="small">${o.note?esc(o.note).replace(/\n/g,"<br>"):""}</span><b>${money(total)}</b></div>
+      <div class="row"><span class="small">${customerNote?esc(customerNote).replace(/\n/g,"<br>"):""}</span><b>${money(total)}</b></div>
     </div>`;
 }
 
