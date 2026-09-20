@@ -1952,7 +1952,7 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 <style id="unno-display-idle-banner-v417">
 #cdIdle{position:relative;overflow:hidden}
 .cd-idle-banners{position:absolute;inset:0;background:#0d3327;z-index:1;opacity:1;transition:opacity .28s ease}
-.cd-idle-banner{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease}
+.cd-banner-fallback{position:absolute;inset:0;display:grid;place-content:center;text-align:center;color:#fff;background:#0d3327}.cd-banner-fallback b{font:900 72px Georgia,serif}.cd-banner-fallback span{font:italic 28px Georgia,serif;margin-top:16px}.cd-idle-banner{position:absolute;z-index:2;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease}
 .cd-idle-banner.active{opacity:1}
 .cd-idle-menu{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;transition:opacity .28s ease;background:#fbf8f0}
 #cdIdle.menu-awake .cd-idle-menu{opacity:1}
@@ -2030,8 +2030,9 @@ body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{dis
 <div id="customerDisplay" aria-live="polite">
   <section id="cdIdle" class="cd-screen cd-idle active">
     <div class="cd-idle-banners">
-      <img class="cd-idle-banner active" src="banners/banner-1.png?v=4173" alt="">
-      <img class="cd-idle-banner" src="banners/banner-2.png?v=4173" alt="">
+      <div class="cd-banner-fallback"><b>UnNo Tea</b><span>Một ly trà – Ngàn cảm xúc ♡</span></div>
+      <img class="cd-idle-banner active" src="banners/banner-1.png?v=4174" alt="UnNo Tea banner 1">
+      <img class="cd-idle-banner" src="banners/banner-2.png?v=4174" alt="UnNo Tea banner 2">
     </div>
     <div id="cdMenuFull" class="cd-idle-menu"></div>
   </section>
@@ -3022,11 +3023,13 @@ const CUSTOMER_DISPLAY_KEY="unno_customer_display_v1";
 const CUSTOMER_DISPLAY_ACTIVITY_KEY="unno_customer_display_activity_v1";
 const CUSTOMER_DISPLAY_IDLE_MS=60000;
 
+let customerDisplayActivityChannel=null;
+try{customerDisplayActivityChannel=new BroadcastChannel("unno_customer_display_activity")}catch(_){}
 function publishMainScreenActivity(){
   if(isCustomerDisplay)return;
-  try{
-    localStorage.setItem(CUSTOMER_DISPLAY_ACTIVITY_KEY,String(Date.now()));
-  }catch(_){}
+  const now=Date.now();
+  try{localStorage.setItem(CUSTOMER_DISPLAY_ACTIVITY_KEY,String(now))}catch(_){}
+  try{customerDisplayActivityChannel?.postMessage({type:"activity",time:now})}catch(_){}
 }
 function initMainScreenActivityBridge(){
   if(isCustomerDisplay)return;
@@ -3092,40 +3095,52 @@ function renderCustomerDisplay(state=cdState()){
 function initIdleBannerMenu(){
   const idle=document.getElementById("cdIdle");
   const banners=[...document.querySelectorAll(".cd-idle-banner")];
-  let bi=0, hideTimer=null;
+  let bi=0;
+  let lastSeenActivity=0;
 
-  if(banners.length>1)setInterval(()=>{
-    if(idle?.classList.contains("menu-awake"))return;
-    banners[bi]?.classList.remove("active");
-    bi=(bi+1)%banners.length;
-    banners[bi]?.classList.add("active");
-  },6500);
+  // Banner carousel always runs while the menu overlay is asleep.
+  if(banners.length){
+    banners.forEach((b,i)=>b.classList.toggle("active",i===0));
+    setInterval(()=>{
+      if(!idle || !idle.classList.contains("active") || idle.classList.contains("menu-awake"))return;
+      banners[bi]?.classList.remove("active");
+      bi=(bi+1)%banners.length;
+      banners[bi]?.classList.add("active");
+    },6500);
+  }
 
-  const showMenuFromMain=()=>{
+  const applyActivity=(t)=>{
+    t=Number(t||0);
+    if(!t || t<=lastSeenActivity)return;
+    lastSeenActivity=t;
     if(!idle || !idle.classList.contains("active"))return;
     idle.classList.add("menu-awake");
-    clearTimeout(hideTimer);
-    hideTimer=setTimeout(()=>{
-      if(idle.classList.contains("active"))idle.classList.remove("menu-awake");
-    },CUSTOMER_DISPLAY_IDLE_MS);
   };
 
+  // storage event works across normal Chrome windows/tabs.
   window.addEventListener("storage",e=>{
-    if(e.key===CUSTOMER_DISPLAY_ACTIVITY_KEY && e.newValue)showMenuFromMain();
+    if(e.key===CUSTOMER_DISPLAY_ACTIVITY_KEY)applyActivity(e.newValue);
   });
 
-  // If the main screen was just active before this display loaded, show menu too.
+  // BroadcastChannel gives an immediate second path on the same browser profile.
   try{
-    const t=Number(localStorage.getItem(CUSTOMER_DISPLAY_ACTIVITY_KEY)||0);
-    const age=Date.now()-t;
-    if(t && age<CUSTOMER_DISPLAY_IDLE_MS){
-      showMenuFromMain();
-      clearTimeout(hideTimer);
-      hideTimer=setTimeout(()=>{
-        if(idle?.classList.contains("active"))idle.classList.remove("menu-awake");
-      },Math.max(0,CUSTOMER_DISPLAY_IDLE_MS-age));
-    }
+    const ch=new BroadcastChannel("unno_customer_display_activity");
+    ch.onmessage=e=>{if(e.data?.type==="activity")applyActivity(e.data.time)};
   }catch(_){}
+
+  // Polling is the fail-safe. It also handles cases where a storage event is missed.
+  setInterval(()=>{
+    if(!idle || !idle.classList.contains("active"))return;
+    let t=0;
+    try{t=Number(localStorage.getItem(CUSTOMER_DISPLAY_ACTIVITY_KEY)||0)}catch(_){}
+    const age=t?Date.now()-t:Infinity;
+    if(t && age<CUSTOMER_DISPLAY_IDLE_MS){
+      lastSeenActivity=Math.max(lastSeenActivity,t);
+      idle.classList.add("menu-awake");
+    }else{
+      idle.classList.remove("menu-awake");
+    }
+  },500);
 }
 function initCustomerDisplay(){
   document.body.classList.add("customer-display-mode");
@@ -3139,6 +3154,7 @@ function initCustomerDisplay(){
   }
   if(idle){
     cdActivate("cdIdle");
+    idle.classList.remove("menu-awake");
     idle.style.opacity="1";
     idle.style.visibility="visible";
   }
