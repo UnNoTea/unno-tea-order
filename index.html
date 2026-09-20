@@ -1948,6 +1948,22 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 .cd-pay-side{padding:18px;display:flex;align-items:center;justify-content:center;overflow:hidden}.cd-pay-side .cd-pay-inner{display:block!important;height:auto!important;width:100%;max-width:none!important}.cd-pay-side .cd-pay-card{padding:12px;border-radius:16px}.cd-pay-side .cd-pay-card img{width:min(210px,28vh)}.cd-pay-side .cd-bank{font-size:13px}.cd-pay-side .cd-account{font-size:10px}.cd-pay-side .cd-pay-info{text-align:center}.cd-pay-side .cd-pay-info h1{font-size:20px;margin:10px 0 5px}.cd-pay-side .cd-pay-total{font-size:36px;letter-spacing:-1px}.cd-pay-side .cd-pay-hint{font-size:11px;margin-top:8px}.cd-pay-side .cd-cash-grid{gap:7px;margin-top:10px}.cd-pay-side .cd-cash-row{padding:9px 10px;font-size:11px}.cd-pay-side .cd-cash-row b{font-size:16px}
 </style>
 
+
+<style id="unno-display-idle-banner-v417">
+#cdIdle{position:relative;overflow:hidden}
+.cd-idle-banners{position:absolute;inset:0;background:#0d3327;z-index:1}
+.cd-idle-banner{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease}
+.cd-idle-banner.active{opacity:1}
+.cd-idle-menu{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;transition:opacity .28s ease;background:#fbf8f0}
+#cdIdle.menu-awake .cd-idle-menu{opacity:1}
+#cdIdle.menu-awake .cd-idle-banners{opacity:0}
+.cd-menu-cat.snack-wide{grid-column:span 2}
+.cd-menu-cat.snack-wide .cd-menu-rows{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}
+.cd-menu-cat.snack-wide .cd-menu-row{break-inside:avoid}
+.cd-order-menu .cd-menu-cat.snack-wide,.cd-pay-menu .cd-menu-cat.snack-wide{grid-column:span 2}
+.cd-order-menu .cd-menu-cat.snack-wide .cd-menu-rows,.cd-pay-menu .cd-menu-cat.snack-wide .cd-menu-rows{column-gap:8px}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2003,7 +2019,11 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 
 <div id="customerDisplay" aria-live="polite">
   <section id="cdIdle" class="cd-screen cd-idle active">
-    <div id="cdMenuFull"></div>
+    <div class="cd-idle-banners">
+      <img class="cd-idle-banner active" src="banners/banner-1.png" alt="">
+      <img class="cd-idle-banner" src="banners/banner-2.png" alt="">
+    </div>
+    <div id="cdMenuFull" class="cd-idle-menu"></div>
   </section>
   <section id="cdOrder" class="cd-screen cd-order">
     <div class="cd-order-layout">
@@ -2978,7 +2998,7 @@ function cdMenuHTML(compact=false){
   gs.forEach(g=>{if(!map.has(g.cat)){map.set(g.cat,[]);cats.push(g.cat)}map.get(g.cat).push(g)});
   return `<div class="cd-menu-shell ${compact?"compact":""}">
     <div class="cd-menu-head"><div class="cd-menu-brand">UnNo Tea<small>GOOD TEA • GOOD MOOD</small></div><div class="cd-menu-slogan">Một ly trà – Ngàn cảm xúc ♡</div></div>
-    <div class="cd-menu-board">${cats.map(cat=>`<section class="cd-menu-cat"><h3>${esc(cat)}</h3>${map.get(cat).map(g=>`<div class="cd-menu-row"><span class="cd-menu-name">${esc(cdMenuName(g))}</span><span class="cd-menu-dots"></span><span class="cd-menu-price">${esc(cdMenuPrice(g))}</span></div>`).join("")}</section>`).join("")}</div>
+    <div class="cd-menu-board">${cats.map(cat=>`<section class="cd-menu-cat ${cat==="ĐỒ ĂN VẶT"?"snack-wide":""}"><h3>${esc(cat)}</h3><div class="cd-menu-rows">${map.get(cat).map(g=>`<div class="cd-menu-row"><span class="cd-menu-name">${esc(cdMenuName(g))}</span><span class="cd-menu-dots"></span><span class="cd-menu-price">${esc(cdMenuPrice(g))}</span></div>`).join("")}</div></section>`).join("")}</div>
     <div class="cd-menu-foot"><span>Giá hiển thị theo menu hiện tại • Món hết hàng & topping được ẩn</span><b>UnNo Tea</b></div>
   </div>`;
 }
@@ -2989,6 +3009,28 @@ function renderCustomerStaticMenus(){
 }
 
 const CUSTOMER_DISPLAY_KEY="unno_customer_display_v1";
+const CUSTOMER_DISPLAY_ACTIVITY_KEY="unno_customer_display_activity_v1";
+const CUSTOMER_DISPLAY_IDLE_MS=60000;
+
+function publishMainScreenActivity(){
+  if(isCustomerDisplay)return;
+  try{
+    localStorage.setItem(CUSTOMER_DISPLAY_ACTIVITY_KEY,String(Date.now()));
+  }catch(_){}
+}
+function initMainScreenActivityBridge(){
+  if(isCustomerDisplay)return;
+  let lastSent=0;
+  const ping=()=>{
+    const now=Date.now();
+    if(now-lastSent<350)return;
+    lastSent=now;
+    publishMainScreenActivity();
+  };
+  ["mousemove","mousedown","click","keydown","wheel","touchstart"].forEach(ev=>{
+    window.addEventListener(ev,ping,{passive:true});
+  });
+}
 let cdThanksTimer=null;
 function cdState(){
   try{return JSON.parse(localStorage.getItem(CUSTOMER_DISPLAY_KEY)||"{}")}catch(e){return {}}
@@ -3032,11 +3074,50 @@ function renderCustomerDisplay(state=cdState()){
     document.getElementById("cdTotal").textContent=money(Number(state.total||0));
   }else cdActivate("cdIdle");
 }
+function initIdleBannerMenu(){
+  const idle=document.getElementById("cdIdle");
+  const banners=[...document.querySelectorAll(".cd-idle-banner")];
+  let bi=0, hideTimer=null;
+
+  if(banners.length>1)setInterval(()=>{
+    if(idle?.classList.contains("menu-awake"))return;
+    banners[bi]?.classList.remove("active");
+    bi=(bi+1)%banners.length;
+    banners[bi]?.classList.add("active");
+  },6500);
+
+  const showMenuFromMain=()=>{
+    if(!idle || !idle.classList.contains("active"))return;
+    idle.classList.add("menu-awake");
+    clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>{
+      if(idle.classList.contains("active"))idle.classList.remove("menu-awake");
+    },CUSTOMER_DISPLAY_IDLE_MS);
+  };
+
+  window.addEventListener("storage",e=>{
+    if(e.key===CUSTOMER_DISPLAY_ACTIVITY_KEY && e.newValue)showMenuFromMain();
+  });
+
+  // If the main screen was just active before this display loaded, show menu too.
+  try{
+    const t=Number(localStorage.getItem(CUSTOMER_DISPLAY_ACTIVITY_KEY)||0);
+    const age=Date.now()-t;
+    if(t && age<CUSTOMER_DISPLAY_IDLE_MS){
+      showMenuFromMain();
+      clearTimeout(hideTimer);
+      hideTimer=setTimeout(()=>{
+        if(idle?.classList.contains("active"))idle.classList.remove("menu-awake");
+      },Math.max(0,CUSTOMER_DISPLAY_IDLE_MS-age));
+    }
+  }catch(_){}
+}
 function initCustomerDisplay(){
   document.body.classList.add("customer-display-mode");
   document.getElementById("customerDisplay")?.classList.add("cd-show");
   renderCustomerStaticMenus();
   renderCustomerDisplay();
+  initIdleBannerMenu();
   window.addEventListener("storage",e=>{if(e.key===CUSTOMER_DISPLAY_KEY&&e.newValue){try{renderCustomerDisplay(JSON.parse(e.newValue))}catch(_){}}});
 }
 
