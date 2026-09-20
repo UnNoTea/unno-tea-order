@@ -2596,6 +2596,18 @@ function isTableNumber(v){return /^\d+$/.test(String(v||"").trim())}
 function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:") || o.status==="Hoàn thành"}
 function isStaffCounterOrder(o){return (o?.note||"").includes("[NGUỒN: TẠI QUÁN]") && !(o?.note||"").includes("[NGUỒN: QR]")}
 
+function isNotifyOrder(o){
+  const table=String(o?.table_number||"");
+  const note=String(o?.note||"");
+  const online=table==="GIAO HÀNG"||table==="MANG VỀ";
+  const qr=/^\d+$/.test(table) && (note.includes("[NGUỒN: QR]") || !!o?.customer_token);
+  return online||qr;
+}
+const SEEN_NOTIFY_KEY="unno_seen_notify_orders_v2";
+function getSeenNotifyIds(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_NOTIFY_KEY)||"[]").map(String))}catch(e){return new Set()}}
+function saveSeenNotifyIds(set){try{localStorage.setItem(SEEN_NOTIFY_KEY,JSON.stringify([...set].slice(-500)))}catch(e){}}
+
+
 
 async function getOccupiedTables(){
   if(!sb)return new Set();
@@ -2903,6 +2915,9 @@ function showNewOrderAlert(count=1){
   setTimeout(adminSpeakNewOrder,720);
 }
 function dismissNewOrderAlert(){
+  const seen=getSeenNotifyIds();
+  if(knownOrderIds)knownOrderIds.forEach(id=>seen.add(String(id)));
+  saveSeenNotifyIds(seen);
   newOrderUnread=0;
   const a=document.getElementById("newOrderAlert"),c=document.getElementById("newOrderCount");
   if(a)a.classList.remove("show");
@@ -2915,11 +2930,13 @@ async function checkNewOrdersInBackground(){
   const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
   if(!sb||!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
   try{
-    const {data,error}=await sb.from("orders").select("id").order("created_at",{ascending:false}).limit(120);
+    const {data,error}=await sb.from("orders").select("id,table_number,note,customer_token").order("created_at",{ascending:false}).limit(120);
     if(error)return;
-    const ids=new Set((data||[]).map(o=>String(o.id)));
+    const eligible=(data||[]).filter(isNotifyOrder);
+    const ids=new Set(eligible.map(o=>String(o.id)));
+    const seen=getSeenNotifyIds();
     if(knownOrderIds){
-      const fresh=[...ids].filter(id=>!knownOrderIds.has(id));
+      const fresh=[...ids].filter(id=>!knownOrderIds.has(id)&&!seen.has(id));
       if(fresh.length)showNewOrderAlert(fresh.length);
     }
     knownOrderIds=ids;
@@ -2928,21 +2945,12 @@ async function checkNewOrdersInBackground(){
 function handleRealtimeOrderChange(payload){
   const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
   if(!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
-  if(payload?.eventType==="INSERT" && payload.new?.id!=null){
-    if(isStaffCounterOrder(payload.new)){
-      if(document.getElementById("tableFloorGrid"))setTimeout(refreshTableFloor,120);
-      return;
-    }
-    if((payload.new?.note||"").includes("[NGUỒN: TẠI QUÁN]")){
-      if(document.getElementById("tableFloorGrid"))setTimeout(refreshTableFloor,120);
-      return;
-    }
-    const id=String(payload.new.id);
-    if(knownOrderIds && !knownOrderIds.has(id) && !JSON.parse(localStorage.getItem("unno_seen_orders_v1")||"[]").includes(id)){
+  if(document.getElementById("tableFloorGrid"))setTimeout(refreshTableFloor,120);
+  if(payload?.eventType==="INSERT" && payload.new?.id!=null && isNotifyOrder(payload.new)){
+    const id=String(payload.new.id),seen=getSeenNotifyIds();
+    if(!knownOrderIds)knownOrderIds=new Set();
+    if(!knownOrderIds.has(id)&&!seen.has(id)){
       knownOrderIds.add(id);
-      showNewOrderAlert(1);
-    }else if(!knownOrderIds){
-      knownOrderIds=new Set([id]);
       showNewOrderAlert(1);
     }
   }
@@ -2956,15 +2964,11 @@ async function renderOrders(view){
   if(view==="kitchen")q=q.neq("status","Hoàn thành");
   let {data,error}=await q;
   if(error)return document.getElementById("adminView").innerHTML=`<div class="notice error">${esc(error.message)}</div>`;
-  // Tab Đơn hàng/Bếp chỉ hiển thị đơn khách tự đặt qua QR hoặc Online.
-  // Đơn nhân viên tạo tại quán được quản lý ở Sơ đồ bàn.
-  data=(data||[]).filter(o=>!isStaffCounterOrder(o));
+  // Tab Đơn hàng/Bếp: chỉ đơn khách QR và Online.
+  data=(data||[]).filter(isNotifyOrder);
   const ids=new Set((data||[]).map(o=>String(o.id)));
-  if(knownOrderIds){
-    const fresh=[...ids].filter(id=>!knownOrderIds.has(id));
-    if(fresh.length)showNewOrderAlert(fresh.length);
-  }
-  knownOrderIds=ids;
+  if(!knownOrderIds)knownOrderIds=ids;
+  else ids.forEach(id=>knownOrderIds.add(id));
   document.getElementById("adminView").innerHTML=`<div class="orders">${(data||[]).map(orderCard).join("")||'<div class="empty">Chưa có đơn.</div>'}</div>`;
 }
 function orderCard(o){
