@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111"><title>UnNo Tea • Order</title>
-<!-- V4.13.4 Customer Display - 2 replaceable PNG banners --><link rel="icon" href="logo.jpg">
+<!-- V4.16.0 Customer Display - static one-page menu + 65/35 live order --><link rel="icon" href="logo.jpg">
 <style>
 :root{--bg:#f5f3ee;--card:#fff;--ink:#111;--muted:#747474;--line:#e5e1d8;--soft:#efede7;--ok:#1f7a45;--danger:#b42318}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -1922,6 +1922,32 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 .cd-thanks .brand{color:var(--unno-green)}
 </style>
 
+
+<style id="unno-static-menu-display-v416">
+#customerDisplay{--menu-green:#123d2d;--menu-cream:#fbf8f0;--menu-line:#e7e0d2}
+.cd-menu-shell{height:100%;display:flex;flex-direction:column;background:var(--menu-cream);padding:16px 20px 14px}
+.cd-menu-head{height:62px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--menu-green);padding:0 4px 10px}
+.cd-menu-brand{font:900 31px/1 Georgia,serif;color:var(--menu-green)}.cd-menu-brand small{font:700 10px/1.2 Arial;letter-spacing:2px;display:block;margin-top:6px}
+.cd-menu-slogan{font:italic 20px/1 Georgia,serif;color:#436454}
+.cd-menu-board{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;padding-top:10px;align-content:start;overflow:hidden}
+.cd-menu-cat{background:#fff;border:1px solid var(--menu-line);border-radius:12px;padding:8px 10px;min-width:0}
+.cd-menu-cat h3{margin:0 0 5px;background:var(--menu-green);color:#fff;border-radius:8px;padding:6px 8px;font-size:13px;line-height:1;text-transform:uppercase;letter-spacing:.3px}
+.cd-menu-row{display:flex;align-items:baseline;gap:5px;font-size:10.5px;line-height:1.25;padding:2px 1px;border-bottom:1px dotted #e5dfd4}
+.cd-menu-row:last-child{border-bottom:0}.cd-menu-name{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cd-menu-dots{flex:1;border-bottom:1px dotted #b9b4aa;min-width:5px}.cd-menu-price{font-weight:900;white-space:nowrap;color:#173d2d}
+.cd-menu-foot{height:22px;display:flex;align-items:flex-end;justify-content:space-between;font-size:10px;color:#68746d}
+.cd-order{padding:0!important}.cd-order-layout{height:100%;display:grid;grid-template-columns:65% 35%;background:var(--menu-cream)}
+.cd-order-menu{min-width:0;border-right:3px solid var(--menu-green);padding:12px 12px 10px}
+.cd-order-menu .cd-menu-shell{padding:0}.cd-order-menu .cd-menu-head{height:50px}.cd-order-menu .cd-menu-brand{font-size:25px}.cd-order-menu .cd-menu-slogan{font-size:15px}
+.cd-order-menu .cd-menu-board{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-top:7px}.cd-order-menu .cd-menu-cat{padding:5px 6px;border-radius:8px}.cd-order-menu .cd-menu-cat h3{font-size:10px;padding:4px 5px;margin-bottom:3px}.cd-order-menu .cd-menu-row{font-size:8px;padding:1px 0}
+.cd-order-side{padding:18px 18px 14px;display:flex;flex-direction:column;min-width:0;background:#f6f1e5}
+.cd-order-side-head{color:var(--menu-green);border-bottom:2px solid var(--menu-green);padding-bottom:10px}.cd-order-side-head b{font-size:24px}.cd-order-side-head div{font-size:11px;margin-top:3px}
+.cd-order-side .cd-items{flex:1;min-height:0;overflow:auto;background:#fff;border-radius:14px;margin-top:12px;padding:5px 10px!important}
+.cd-order-side .cd-item{grid-template-columns:30px minmax(0,1fr) 36px!important;gap:6px!important;min-height:49px!important;padding:6px 1px!important}.cd-order-side .cd-item-no{width:25px;height:25px;border-radius:7px;font-size:11px}.cd-order-side .cd-item-name{font-size:12px!important}.cd-order-side .cd-item-sub{font-size:9px}.cd-order-side .cd-item-qty{font-size:12px}.cd-order-side .cd-item-price{display:none}
+.cd-order-total{background:var(--menu-green);color:#fff;border-radius:14px;margin-top:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}.cd-order-total span{font-size:12px}.cd-order-total b{font-size:27px}
+.cd-pay{padding:0!important}.cd-pay-layout{height:100%;display:grid;grid-template-columns:65% 35%;background:var(--menu-cream)}.cd-pay-menu{border-right:3px solid var(--menu-green);padding:12px}.cd-pay-menu .cd-menu-shell{padding:0}.cd-pay-menu .cd-menu-head{height:50px}.cd-pay-menu .cd-menu-brand{font-size:25px}.cd-pay-menu .cd-menu-slogan{font-size:15px}.cd-pay-menu .cd-menu-board{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-top:7px}.cd-pay-menu .cd-menu-cat{padding:5px 6px}.cd-pay-menu .cd-menu-cat h3{font-size:10px;padding:4px 5px;margin-bottom:3px}.cd-pay-menu .cd-menu-row{font-size:8px;padding:1px 0}
+.cd-pay-side{padding:18px;display:flex;align-items:center;justify-content:center;overflow:hidden}.cd-pay-side .cd-pay-inner{display:block!important;height:auto!important;width:100%;max-width:none!important}.cd-pay-side .cd-pay-card{padding:12px;border-radius:16px}.cd-pay-side .cd-pay-card img{width:min(210px,28vh)}.cd-pay-side .cd-bank{font-size:13px}.cd-pay-side .cd-account{font-size:10px}.cd-pay-side .cd-pay-info{text-align:center}.cd-pay-side .cd-pay-info h1{font-size:20px;margin:10px 0 5px}.cd-pay-side .cd-pay-total{font-size:36px;letter-spacing:-1px}.cd-pay-side .cd-pay-hint{font-size:11px;margin-top:8px}.cd-pay-side .cd-cash-grid{gap:7px;margin-top:10px}.cd-pay-side .cd-cash-row{padding:9px 10px;font-size:11px}.cd-pay-side .cd-cash-row b{font-size:16px}
+</style>
+
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -1977,17 +2003,24 @@ body.customer-display-mode> :not(#customerDisplay):not(script):not(style){displa
 
 <div id="customerDisplay" aria-live="polite">
   <section id="cdIdle" class="cd-screen cd-idle active">
-  <div class="unno-ad-stage">
-    <img class="unno-ad active" src="banners/banner-1.png" alt="UnNo Tea banner 1">
-    <img class="unno-ad" src="banners/banner-2.png" alt="UnNo Tea banner 2">
-    <div class="unno-ad-dots"><span class="active"></span><span></span></div>
-  </div>
-</section>
-<section id="cdOrder" class="cd-screen cd-order">
-    <div class="cd-top"><div class="cd-logo">UnNo Tea<small>MORE THAN JUST TEA</small></div><div class="cd-title"><b>ĐƠN HÀNG CỦA BẠN</b><div>Cảm ơn bạn đã chọn UnNo Tea!</div></div></div>
-    <div class="cd-order-body"><div id="cdItems" class="cd-items"></div><aside class="cd-summary"><div><div class="cd-summary-label">TỔNG THANH TOÁN</div><div id="cdTotal" class="cd-total">0đ</div></div><div class="cd-summary-note">Bạn kiểm tra lại món giúp UnNo Tea nhé ♥<br><br><b>Good Tea • Good Mood</b></div></aside></div>
+    <div id="cdMenuFull"></div>
   </section>
-  <section id="cdPay" class="cd-screen cd-pay"><div id="cdPayInner" class="cd-pay-inner"></div></section>
+  <section id="cdOrder" class="cd-screen cd-order">
+    <div class="cd-order-layout">
+      <div class="cd-order-menu"><div id="cdMenuOrder"></div></div>
+      <aside class="cd-order-side">
+        <div class="cd-order-side-head"><b>ĐƠN HÀNG CỦA BẠN</b><div>Bạn kiểm tra lại món giúp UnNo Tea nhé ♥</div></div>
+        <div id="cdItems" class="cd-items"></div>
+        <div class="cd-order-total"><span>TỔNG THANH TOÁN</span><b id="cdTotal">0đ</b></div>
+      </aside>
+    </div>
+  </section>
+  <section id="cdPay" class="cd-screen cd-pay">
+    <div class="cd-pay-layout">
+      <div class="cd-pay-menu"><div id="cdMenuPay"></div></div>
+      <aside class="cd-pay-side"><div id="cdPayInner" class="cd-pay-inner"></div></aside>
+    </div>
+  </section>
   <section id="cdThanks" class="cd-screen cd-thanks"><div><div class="heart">♥</div><h1>Cảm ơn quý khách!</h1><p>UnNo Tea chúc bạn một ngày thật nhiều niềm vui.</p><div class="brand">UnNo Tea • Hẹn gặp lại!</div></div></section>
 </div>
 
@@ -2925,6 +2958,30 @@ document.getElementById("ordersModal").addEventListener("click",e=>{if(e.target=
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();closeCart();closeMyOrders()}});
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
 
+function cdMenuPrice(g){
+  const vs=(g.availableVariants||[]).slice().sort((a,b)=>Number(a.price)-Number(b.price));
+  if(!vs.length)return "";
+  if(vs.length===1)return money(vs[0].price).replace("đ","");
+  const labels=vs.map(v=>{const l=optionLabel(v).replace(/^Size\s*/i,"");return (l?l+" ":"")+money(v.price).replace("đ","")});
+  return labels.join(" / ");
+}
+function cdMenuHTML(compact=false){
+  const hiddenCats=new Set(["Topping","Topping thêm","TOPPING","TOPPING THÊM"]);
+  const gs=groupedMenu().filter(g=>!g.soldOut&&!hiddenCats.has(g.cat));
+  const cats=[]; const map=new Map();
+  gs.forEach(g=>{if(!map.has(g.cat)){map.set(g.cat,[]);cats.push(g.cat)}map.get(g.cat).push(g)});
+  return `<div class="cd-menu-shell ${compact?"compact":""}">
+    <div class="cd-menu-head"><div class="cd-menu-brand">UnNo Tea<small>GOOD TEA • GOOD MOOD</small></div><div class="cd-menu-slogan">Một ly trà – Ngàn cảm xúc ♡</div></div>
+    <div class="cd-menu-board">${cats.map(cat=>`<section class="cd-menu-cat"><h3>${esc(cat)}</h3>${map.get(cat).map(g=>`<div class="cd-menu-row"><span class="cd-menu-name">${esc(g.name)}</span><span class="cd-menu-dots"></span><span class="cd-menu-price">${esc(cdMenuPrice(g))}</span></div>`).join("")}</section>`).join("")}</div>
+    <div class="cd-menu-foot"><span>Giá hiển thị theo menu hiện tại • Món hết hàng & topping được ẩn</span><b>UnNo Tea</b></div>
+  </div>`;
+}
+function renderCustomerStaticMenus(){
+  if(!isCustomerDisplay)return;
+  const html=cdMenuHTML();
+  ["cdMenuFull","cdMenuOrder","cdMenuPay"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html});
+}
+
 const CUSTOMER_DISPLAY_KEY="unno_customer_display_v1";
 let cdThanksTimer=null;
 function cdState(){
@@ -2965,22 +3022,14 @@ function renderCustomerDisplay(state=cdState()){
   }
   if(state.items&&state.items.length){
     cdActivate("cdOrder");
-    document.getElementById("cdItems").innerHTML=state.items.map((x,i)=>`<div class="cd-item"><div class="cd-item-no">${i+1}</div><div><div class="cd-item-name">${esc(x.name)}</div><div class="cd-item-sub">${money(x.unitPrice)} / món</div></div><div class="cd-item-qty">×${x.qty}</div><div class="cd-item-price">${money(x.unitPrice*x.qty)}</div></div>`).join("");
+    document.getElementById("cdItems").innerHTML=state.items.map((x,i)=>`<div class="cd-item"><div class="cd-item-no">${i+1}</div><div><div class="cd-item-name">${esc(x.name)}</div><div class="cd-item-sub">${money(x.unitPrice*x.qty)}</div></div><div class="cd-item-qty">×${x.qty}</div></div>`).join("");
     document.getElementById("cdTotal").textContent=money(Number(state.total||0));
   }else cdActivate("cdIdle");
 }
 function initCustomerDisplay(){
   document.body.classList.add("customer-display-mode");
   document.getElementById("customerDisplay")?.classList.add("cd-show");
-  const ads=[...document.querySelectorAll(".unno-ad")], adDots=[...document.querySelectorAll(".unno-ad-dots span")];
-  ads.forEach(img=>{const raw=img.getAttribute("src");if(raw&&!raw.startsWith("data:"))img.src=raw+"?v="+Date.now()});
-  let adIndex=0;
-  if(ads.length)setInterval(()=>{
-    if(!document.getElementById("cdIdle")?.classList.contains("active"))return;
-    ads[adIndex]?.classList.remove("active"); adDots[adIndex]?.classList.remove("active");
-    adIndex=(adIndex+1)%ads.length;
-    ads[adIndex]?.classList.add("active"); adDots[adIndex]?.classList.add("active");
-  },5200);
+  renderCustomerStaticMenus();
   renderCustomerDisplay();
   window.addEventListener("storage",e=>{if(e.key===CUSTOMER_DISPLAY_KEY&&e.newValue){try{renderCustomerDisplay(JSON.parse(e.newValue))}catch(_){}}});
 }
