@@ -2016,6 +2016,20 @@ body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{dis
 }
 </style>
 
+<style id="unno-one-table-one-bill-v4201">
+#counterCartItems .existing-bill-item{background:#f5faf6}
+#counterCartItems .existing-bill-item .qty{justify-content:center;font-weight:800}
+</style><style id="unno-qr-one-bill-v421">
+.table-card.open .ts{font-weight:850}
+</style>
+<style id="unno-occupied-table-v422">
+.occupied-table-modal{position:fixed;inset:0;z-index:20050;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:18px}
+.occupied-table-card{width:min(520px,100%);max-height:86vh;overflow:auto;background:#fffdf7;border-radius:20px;padding:20px;box-shadow:0 20px 60px #0004}
+.occupied-table-card h3{margin:0 0 8px;color:#173d2d;font-size:21px}.occupied-table-card p{margin:0 0 15px;line-height:1.45}
+.free-table-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.free-table-grid button{border:1px solid #b8d2c1;background:#e7f4eb;color:#173d2d;border-radius:11px;padding:12px 5px;font-weight:800}
+.close-free-table{width:100%;margin-top:14px;border:0;border-radius:11px;padding:11px;background:#eee;color:#444;font-weight:700}
+@media(max-width:520px){.free-table-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2110,6 +2124,23 @@ function startTableFloorLiveRefresh(){
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && document.getElementById("tableFloorGrid"))refreshTableFloor()});
 window.addEventListener("focus",()=>{if(document.getElementById("tableFloorGrid"))refreshTableFloor()});
 setTimeout(startTableFloorLiveRefresh,1200);
+
+
+let unnoTableFloorTimer=setInterval(()=>{
+  const floor=document.getElementById("counterTableFloor");
+  if(floor&&floor.style.display!=="none")refreshTableFloor();
+},3000);
+window.addEventListener("focus",()=>{if(document.getElementById("tableFloorGrid"))refreshTableFloor()});
+
+
+async function warnIfScannedTableOccupied(){
+  if(orderMode!=="table"||!tableNumber||!sb)return;
+  const open=await findOpenTableOrder(tableNumber);
+  if(open&&(open.note||"").includes("[NGUỒN: TẠI QUÁN]")&&!(open.note||"").includes("[NGUỒN: QR]")){
+    if(!document.querySelector(".occupied-table-modal"))chooseFreeTableForCustomer(tableNumber);
+  }
+}
+setTimeout(warnIfScannedTableOccupied,1400);
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
@@ -2258,14 +2289,39 @@ async function placeOrder(opts={}){
     ].filter(Boolean).join("\n");
     note=info;
   }
-  const orderId=Date.now();
+  let orderId=Date.now();
   const customerToken=counterOrdering?null:(crypto.randomUUID?crypto.randomUUID():(Date.now()+"-"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)));
-  const payload={id:orderId,table_number:tableValue,status:"Mới",note,customer_token:customerToken};
-  let {error}=await sb.from("orders").insert(payload);
-  if(error)return alert(error.message);
+  const isQrTable=!counterOrdering&&orderMode==="table"&&/^\d+$/.test(String(tableValue));
+  let joinedExisting=false;
+  if(isQrTable){
+    const openBill=await findOpenTableOrder(tableValue);
+    if(openBill){
+      const staffOccupied=(openBill.note||"").includes("[NGUỒN: TẠI QUÁN]") && !(openBill.note||"").includes("[NGUỒN: QR]");
+      if(staffOccupied){
+        await chooseFreeTableForCustomer(tableValue);
+        return;
+      }
+      orderId=openBill.id;joinedExisting=true;
+      const mergedNote=markQrSource(openBill.note||"");
+      const keepToken=openBill.customer_token||customerToken;
+      const {error}=await sb.from("orders").update({status:"Mới",note:mergedNote,customer_token:keepToken}).eq("id",orderId);
+      if(error)return alert(error.message);
+    }else{
+      const payload={id:orderId,table_number:tableValue,status:"Mới",note:markQrSource(note),customer_token:customerToken};
+      const {error}=await sb.from("orders").insert(payload);
+      if(error)return alert(error.message);
+    }
+  }else{
+    const payload={id:orderId,table_number:tableValue,status:"Mới",note,customer_token:customerToken};
+    const {error}=await sb.from("orders").insert(payload);
+    if(error)return alert(error.message);
+  }
   let rows=cart.map(x=>({order_id:orderId,menu_item_id:x.menuItemId||null,item_name:x.name,price:x.unitPrice,quantity:x.qty}));
   let r=await sb.from("order_items").insert(rows);
-  if(r.error){await sb.from("orders").delete().eq("id",orderId);return alert(r.error.message)}
+  if(r.error){
+    if(!joinedExisting)await sb.from("orders").delete().eq("id",orderId);
+    return alert(r.error.message)
+  }
   if(!counterOrdering && customerToken)saveTrackedOrder(orderId,customerToken);
   cart=[];setCart();closeCart();document.getElementById("note").value="";
   if(!counterOrdering && orderMode!=="table"){
@@ -2488,10 +2544,12 @@ function renderCounterCart(){
   const box=document.getElementById("counterCartItems");if(!box)return;
   const count=cart.reduce((a,x)=>a+x.qty,0);
   const badge=document.getElementById("counterBadge");if(badge)badge.textContent=count;
-  box.innerHTML=cart.length?cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join(""):'<div class="counter-empty-visual"><div class="counter-empty-icon">🛒</div><div>Chưa chọn món.</div></div>';
-  document.getElementById("counterTotal").textContent=money(cart.reduce((a,x)=>a+x.unitPrice*x.qty,0));
+  const existing=(counterOpenItems||[]).map(x=>`<div class="item existing-bill-item"><div><b>${esc(x.item_name)}</b><div class="small">${money(Number(x.price||0))}</div></div><div class="qty"><span>${Number(x.quantity||0)}</span></div><b>${money(Number(x.price||0)*Number(x.quantity||0))}</b></div>`).join("");
+  const adding=cart.map((x,i)=>`<div class="item"><div><b>${esc(x.name)}</b><div class="small">${money(x.unitPrice)}</div></div><div class="qty"><button onclick="counterChg(${i},-1)">−</button><span>${x.qty}</span><button onclick="counterChg(${i},1)">+</button></div><b>${money(x.unitPrice*x.qty)}</b></div>`).join("");
+  box.innerHTML=(existing+adding)||'<div class="counter-empty-visual"><div class="counter-empty-icon">🛒</div><div>Chưa chọn món.</div></div>';
+  document.getElementById("counterTotal").textContent=money(openTableTotal()+cart.reduce((a,x)=>a+x.unitPrice*x.qty,0));
   const sum=document.getElementById("counterOpenBillSummary");
-  if(sum)sum.innerHTML=counterOpenOrderId?`Bill hiện tại Bàn ${esc(counterOpenTable)}: <b>${money(openTableTotal())}</b> • Gọi thêm sẽ cộng vào bill này.`:"";
+  if(sum)sum.innerHTML=counterOpenOrderId?`Bàn ${esc(counterOpenTable)} • Tổng hiện tại: <b>${money(openTableTotal()+cart.reduce((a,x)=>a+x.unitPrice*x.qty,0))}</b>`:"";
   updateCounterPaymentUI();
   publishCustomerDisplay();
 }
@@ -2536,6 +2594,50 @@ function updateCounterPaymentUI(){
 let tableFloorOrders={};
 function isTableNumber(v){return /^\d+$/.test(String(v||"").trim())}
 function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:") || o.status==="Hoàn thành"}
+
+
+async function getOccupiedTables(){
+  if(!sb)return new Set();
+  const {data,error}=await sb.from("orders").select("table_number,status,note").order("created_at",{ascending:false}).limit(500);
+  if(error)return new Set();
+  const occupied=new Set();
+  (data||[]).forEach(o=>{
+    const t=String(o.table_number||"").trim();
+    if(/^\d+$/.test(t)&&!orderIsPaid(o))occupied.add(t);
+  });
+  return occupied;
+}
+async function chooseFreeTableForCustomer(scannedTable){
+  const occupied=await getOccupiedTables();
+  const free=Array.from({length:30},(_,i)=>String(i+1)).filter(n=>!occupied.has(n));
+  const wrap=document.createElement("div");
+  wrap.className="occupied-table-modal";
+  wrap.innerHTML=`<div class="occupied-table-card">
+    <h3>⚠️ Bàn ${esc(scannedTable)} đã có khách</h3>
+    <p>Bàn này đã có khách đến trước. Quý khách vui lòng chọn một bàn trống để order.</p>
+    <div class="free-table-grid">${free.length?free.map(n=>`<button type="button" onclick="selectFreeCustomerTable('${n}')">Bàn ${n}</button>`).join(""):'<div class="notice">Hiện chưa có bàn trống. Vui lòng liên hệ nhân viên.</div>'}</div>
+    <button class="close-free-table" type="button" onclick="this.closest('.occupied-table-modal').remove()">Đóng</button>
+  </div>`;
+  document.body.appendChild(wrap);
+  return false;
+}
+function selectFreeCustomerTable(n){
+  const u=new URL(location.href);u.searchParams.set("table",n);u.searchParams.delete("admin");u.searchParams.delete("display");
+  location.href=u.toString();
+}
+
+async function findOpenTableOrder(tableNo){
+  if(!sb||!/^\d+$/.test(String(tableNo||"").trim()))return null;
+  const {data,error}=await sb.from("orders").select("id,table_number,status,note,customer_token,created_at")
+    .eq("table_number",String(tableNo).trim()).order("created_at",{ascending:false}).limit(30);
+  if(error)return null;
+  return (data||[]).find(o=>!orderIsPaid(o))||null;
+}
+function markQrSource(note){
+  note=String(note||"").replace("[NGUỒN: TẠI QUÁN]","").trim();
+  return note.includes("[NGUỒN: QR]")?note:["[NGUỒN: QR]",note].filter(Boolean).join("\\n");
+}
+
 async function refreshTableFloor(){
   if(!sb)return;
   const {data,error}=await sb.from("orders").select("id,table_number,status,note,customer_token,created_at,order_items(price,quantity)").order("created_at",{ascending:false}).limit(500);
@@ -2543,7 +2645,7 @@ async function refreshTableFloor(){
   tableFloorOrders={};
   (data||[]).forEach(o=>{const t=String(o.table_number||"").trim();if(isTableNumber(t)&&!orderIsPaid(o)&&!tableFloorOrders[t])tableFloorOrders[t]=o});
   const grid=document.getElementById("tableFloorGrid");if(!grid)return;
-  grid.innerHTML=Array.from({length:30},(_,i)=>{const n=String(i+1),o=tableFloorOrders[n];const total=o?(o.order_items||[]).reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0):0;return `<button class="table-card ${o?"open":"empty"}" onclick="openTableWorkspace('${n}')"><div class="tn">Bàn ${n}</div><div class="ts">${o?`● ĐANG CÓ ĐƠN${o.customer_token?" • QR":""}`:"Bàn trống"}</div>${o?`<div class="tt">${money(total)}</div>`:""}</button>`}).join("");
+  grid.innerHTML=Array.from({length:30},(_,i)=>{const n=String(i+1),o=tableFloorOrders[n];const total=o?(o.order_items||[]).reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0):0;return `<button class="table-card ${o?"open":"empty"}" onclick="openTableWorkspace('${n}')"><div class="tn">Bàn ${n}</div><div class="ts">${o?`● ĐANG CÓ ĐƠN${((o.note||"").includes("[NGUỒN: QR]")||o.customer_token)?" • 📱 QR":""}`:"Bàn trống"}</div>${o?`<div class="tt">${money(total)}</div>`:""}</button>`}).join("");
 }
 async function openTableWorkspace(n){
   counterOpenTable=String(n);document.getElementById("counterTableFloor").style.display="none";document.getElementById("counterOrderWorkspace").style.display="";
@@ -2576,7 +2678,12 @@ async function loadOpenTable(tableNo){
     counterOpenOrderId=open.id;
     counterOpenItems=open.order_items||[];
     counterOpenNote=(open.note||"").replace(openTableMarker(),"").replace(/^Ghi chú:\s*/,"").trim();
-    if(info)info.innerHTML=`🟢 <b>Bàn ${esc(counterOpenTable)} đang mở</b> • ${counterOpenItems.reduce((a,x)=>a+x.quantity,0)} món • ${money(openTableTotal())}`;
+    if(info){
+      const qr=((open.note||"").includes("[NGUỒN: QR]")||open.customer_token);
+      info.innerHTML=qr
+        ? `📱 <b>Bàn ${esc(counterOpenTable)} đang có đơn từ khách quét QR</b><br><span class="small">Mở đúng bill hiện tại để tránh tạo trùng đơn.</span>`
+        : `🟢 <b>Bàn ${esc(counterOpenTable)} đang mở</b> • ${counterOpenItems.reduce((a,x)=>a+x.quantity,0)} món • ${money(openTableTotal())}`;
+    }
   }else{
     if(info)info.innerHTML=`⚪ Bàn ${esc(counterOpenTable)} chưa có đơn. Chọn món rồi bấm <b>Gửi món / In tem</b>.`;
   }
@@ -2594,12 +2701,14 @@ async function sendCounterItems(){
   let orderId=counterOpenOrderId;
   if(!orderId){
     orderId=Date.now();
-    const note=[openTableMarker(),staffNote?"Ghi chú: "+staffNote:""].filter(Boolean).join("\\n");
+    const note=[openTableMarker(),"[NGUỒN: TẠI QUÁN]",staffNote?"Ghi chú: "+staffNote:""].filter(Boolean).join("\\n");
     const {error}=await sb.from("orders").insert({id:orderId,table_number:counterOpenTable,status:"Mới",note,customer_token:null});
     if(error){if(labelWindow)labelWindow.close();return alert(error.message)}
     counterOpenOrderId=orderId;
   }else if(staffNote){
-    const merged=[openTableMarker(),counterOpenNote?counterOpenNote:"",staffNote].filter(Boolean).join("\\n");
+    const qrOrigin=(counterOpenNote||"").includes("[NGUỒN: QR]");
+    const staffOrigin=(counterOpenNote||"").includes("[NGUỒN: TẠI QUÁN]");
+    const merged=[openTableMarker(),qrOrigin?"[NGUỒN: QR]":(staffOrigin?"[NGUỒN: TẠI QUÁN]":""),counterOpenNote?counterOpenNote:"",staffNote].filter(Boolean).join("\\n");
     await sb.from("orders").update({note:merged,status:"Mới"}).eq("id",orderId);
   }else{
     await sb.from("orders").update({status:"Mới"}).eq("id",orderId);
