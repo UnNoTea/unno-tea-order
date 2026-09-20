@@ -2030,6 +2030,12 @@ body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{dis
 .close-free-table{width:100%;margin-top:14px;border:0;border-radius:11px;padding:11px;background:#eee;color:#444;font-weight:700}
 @media(max-width:520px){.free-table-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
+
+<style id="unno-hide-order-status-v4227">
+body:has(#ordersView:not([style*="display: none"])) .order-status,
+body:has(#ordersView:not([style*="display: none"])) .status-control,
+body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:none!important}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2626,6 +2632,28 @@ function qrAddEventNote(note){
 }
 let lastQrAddEventSeen="";
 
+const recentNewOrderAlerts=new Map();
+const recentItemAlerts=new Map();
+async function handleRealtimeOrderItem(payload){
+  const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
+  if(!sb||!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
+  if(payload?.eventType!=="INSERT"||payload.new?.order_id==null)return;
+  const oid=String(payload.new.order_id),now=Date.now();
+  // Group several item rows from the same customer submit into one alert.
+  if(now-(recentItemAlerts.get(oid)||0)<1800)return;
+  recentItemAlerts.set(oid,now);
+  try{
+    const {data:o,error}=await sb.from("orders")
+      .select("id,table_number,note,customer_token")
+      .eq("id",payload.new.order_id).maybeSingle();
+    if(error||!o||!isNotifyOrder(o))return; // staff counter order => never notify
+    // First QR/online order is already announced by orders INSERT; avoid duplicate sound.
+    if(now-(recentNewOrderAlerts.get(oid)||0)<5000)return;
+    showNewOrderAlert(1);
+  }catch(e){}
+}
+
+
 function getSeenNotifyIds(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_NOTIFY_KEY)||"[]").map(String))}catch(e){return new Set()}}
 function saveSeenNotifyIds(set){try{localStorage.setItem(SEEN_NOTIFY_KEY,JSON.stringify([...set].slice(-500)))}catch(e){}}
 
@@ -2984,6 +3012,7 @@ function handleRealtimeOrderChange(payload){
     if(!knownOrderIds)knownOrderIds=new Set();
     if(!knownOrderIds.has(id)&&!seen.has(id)){
       knownOrderIds.add(id);
+      recentNewOrderAlerts.set(id,Date.now());
       showNewOrderAlert(1);
     }
   }
@@ -3543,7 +3572,10 @@ if(isCustomerDisplay){
   initMainScreenActivityBridge();
 }
 if(!isCustomerDisplay && (isAdminPath || params.get("admin")==="1")){document.getElementById("customer").style.display="none";document.getElementById("cartBar").style.display="none";document.getElementById("admin").style.display="block";if(sb)sb.auth.getSession().then(({data})=>{if(data.session)adminUI()})}
-if(sb){loadMenu().then(()=>{if(isCustomerDisplay)renderCustomerStaticMenus()}).catch(()=>{});if(!isCustomerDisplay)channel=sb.channel("uno-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload)).subscribe()}else{loadMenu().then(()=>{if(isCustomerDisplay)renderCustomerStaticMenus()}).catch(()=>{});if(!isCustomerDisplay)document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
+if(sb){loadMenu().then(()=>{if(isCustomerDisplay)renderCustomerStaticMenus()}).catch(()=>{});if(!isCustomerDisplay)channel=sb.channel("uno-orders")
+  .on("postgres_changes",{event:"*",schema:"public",table:"orders"},payload=>handleRealtimeOrderChange(payload))
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"order_items"},payload=>handleRealtimeOrderItem(payload))
+  .subscribe()}else{loadMenu().then(()=>{if(isCustomerDisplay)renderCustomerStaticMenus()}).catch(()=>{});if(!isCustomerDisplay)document.getElementById("menu").insertAdjacentHTML("beforebegin",'<div class="notice">Bản đã dựng xong. Để chạy online, hãy điền Supabase URL + anon key trong <b>config.js</b>.</div>')}
 
 setInterval(()=>{
   const om=document.getElementById("ordersModal");
