@@ -2097,7 +2097,21 @@ body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{dis
   <section id="cdThanks" class="cd-screen cd-thanks"><div><div class="heart">♥</div><h1>Cảm ơn quý khách!</h1><p>UnNo Tea chúc bạn một ngày thật nhiều niềm vui.</p><div class="brand">UnNo Tea • Hẹn gặp lại!</div></div></section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// V4.20.0: keep the table map live. QR orders must turn the matching table green.
+let unnoTableFloorTimer=null;
+function startTableFloorLiveRefresh(){
+  if(unnoTableFloorTimer)clearInterval(unnoTableFloorTimer);
+  unnoTableFloorTimer=setInterval(()=>{
+    const floor=document.getElementById("counterTableFloor");
+    if(floor && floor.style.display!=="none") refreshTableFloor();
+  },3000);
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden && document.getElementById("tableFloorGrid"))refreshTableFloor()});
+window.addEventListener("focus",()=>{if(document.getElementById("tableFloorGrid"))refreshTableFloor()});
+setTimeout(startTableFloorLiveRefresh,1200);
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="config.js"></script>
 <script>
@@ -2524,12 +2538,12 @@ function isTableNumber(v){return /^\d+$/.test(String(v||"").trim())}
 function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:") || o.status==="Hoàn thành"}
 async function refreshTableFloor(){
   if(!sb)return;
-  const {data,error}=await sb.from("orders").select("id,table_number,status,note,created_at,order_items(price,quantity)").order("created_at",{ascending:false}).limit(500);
+  const {data,error}=await sb.from("orders").select("id,table_number,status,note,customer_token,created_at,order_items(price,quantity)").order("created_at",{ascending:false}).limit(500);
   if(error)return;
   tableFloorOrders={};
   (data||[]).forEach(o=>{const t=String(o.table_number||"").trim();if(isTableNumber(t)&&!orderIsPaid(o)&&!tableFloorOrders[t])tableFloorOrders[t]=o});
   const grid=document.getElementById("tableFloorGrid");if(!grid)return;
-  grid.innerHTML=Array.from({length:30},(_,i)=>{const n=String(i+1),o=tableFloorOrders[n];const total=o?(o.order_items||[]).reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0):0;return `<button class="table-card ${o?"open":"empty"}" onclick="openTableWorkspace('${n}')"><div class="tn">Bàn ${n}</div><div class="ts">${o?"● ĐANG CÓ ĐƠN":"Bàn trống"}</div>${o?`<div class="tt">${money(total)}</div>`:""}</button>`}).join("");
+  grid.innerHTML=Array.from({length:30},(_,i)=>{const n=String(i+1),o=tableFloorOrders[n];const total=o?(o.order_items||[]).reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0):0;return `<button class="table-card ${o?"open":"empty"}" onclick="openTableWorkspace('${n}')"><div class="tn">Bàn ${n}</div><div class="ts">${o?`● ĐANG CÓ ĐƠN${o.customer_token?" • QR":""}`:"Bàn trống"}</div>${o?`<div class="tt">${money(total)}</div>`:""}</button>`}).join("");
 }
 async function openTableWorkspace(n){
   counterOpenTable=String(n);document.getElementById("counterTableFloor").style.display="none";document.getElementById("counterOrderWorkspace").style.display="";
@@ -2805,6 +2819,10 @@ function handleRealtimeOrderChange(payload){
   const adminEl=document.getElementById("admin"),dashEl=document.getElementById("dash");
   if(!adminEl||!dashEl||adminEl.style.display!=="block"||dashEl.style.display==="none")return;
   if(payload?.eventType==="INSERT" && payload.new?.id!=null){
+    if((payload.new?.note||"").includes("[NGUỒN: TẠI QUÁN]")){
+      if(document.getElementById("tableFloorGrid"))setTimeout(refreshTableFloor,120);
+      return;
+    }
     const id=String(payload.new.id);
     if(knownOrderIds && !knownOrderIds.has(id)){
       knownOrderIds.add(id);
@@ -2824,6 +2842,9 @@ async function renderOrders(view){
   if(view==="kitchen")q=q.neq("status","Hoàn thành");
   let {data,error}=await q;
   if(error)return document.getElementById("adminView").innerHTML=`<div class="notice error">${esc(error.message)}</div>`;
+  // Tab Đơn hàng/Bếp chỉ hiển thị đơn khách tự đặt qua QR hoặc Online.
+  // Đơn nhân viên tạo tại quán được quản lý ở Sơ đồ bàn.
+  data=(data||[]).filter(o=>!(o.note||"").includes("[NGUỒN: TẠI QUÁN]"));
   const ids=new Set((data||[]).map(o=>String(o.id)));
   if(knownOrderIds){
     const fresh=[...ids].filter(id=>!knownOrderIds.has(id));
