@@ -1987,7 +1987,36 @@ body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{dis
 .table-card .tn{font-size:23px;font-weight:900}.table-card .ts{font-size:11px;margin-top:7px}.table-card .tt{font-size:15px;font-weight:900;margin-top:5px}
 .counter-work-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;background:#f7f3e9;border-radius:12px;padding:8px 10px}.counter-work-head b{font-size:20px;color:#173d2d}
 @media(max-width:900px){.table-floor-grid{grid-template-columns:repeat(3,1fr);gap:8px}.table-card{min-height:88px;padding:13px 6px}.table-card .tn{font-size:19px}}
-</style></head>
+</style>
+<style id="unno-counter-cart-clean-v4191">
+/* V4.19.1 - cleaner counter cart, logic unchanged */
+.counter-cart{padding:14px!important;border-radius:16px!important}
+.counter-cart h3{margin:0 0 12px!important;font-size:18px!important}
+.counter-cart-form{display:flex!important;flex-direction:column!important;gap:10px!important}
+.counter-cart-form>label{font-size:13px!important;margin:0!important}
+.open-table-box{margin:0!important;padding:10px!important;border-radius:12px!important;background:#faf8f3!important}
+.open-table-box label{font-size:14px!important}
+#counterOpenInfo{margin-top:5px!important;font-size:11px!important;line-height:1.35!important}
+#counterNote{min-height:42px!important;padding:10px!important}
+#counterOpenBillSummary{margin:0!important}
+.counter-cart .total{margin:0!important;padding:11px 0!important;border-top:1px solid #eee!important;border-bottom:1px solid #eee!important}
+.payment-title{font-size:14px!important;margin:0!important;padding-top:2px!important}
+.payment-methods{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;margin:0!important}
+.payment-methods button{min-height:40px!important;padding:8px!important}
+#cashBox,#transferBox{margin:0!important;padding:10px!important;border-radius:12px!important;background:#faf8f3!important}
+#cashBox label,#transferBox label{font-size:11px!important}
+#counterCashReceived{height:39px!important;margin:4px 0 6px!important}
+.counter-submit{min-height:46px!important;margin:0!important;border-radius:12px!important;font-size:14px!important}
+.counter-pay-btn{margin-top:0!important}
+.counter-cart-actions{display:grid!important;gap:7px!important}
+@media(max-width:900px){
+  .counter-cart{padding:12px!important}
+  .counter-cart-form{gap:8px!important}
+  .counter-cart h3{font-size:17px!important}
+}
+</style>
+
+</head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
 
@@ -2376,7 +2405,7 @@ function renderCounter(){
         <div id="counterCartItems"></div>
         <div class="counter-cart-form">
           <div class="open-table-box" style="border:1px solid #e7e1d8;border-radius:12px;padding:10px;margin-bottom:10px;background:#fffdf8">
-            <label><b>🪑 Bàn khách</b></label>
+            <label><b>Bàn phục vụ</b></label>
             <div style="display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:6px">
               <select id="counterTableSelect" onchange="loadOpenTable(this.value)">
                 <option value="">Chọn bàn...</option>
@@ -2386,12 +2415,12 @@ function renderCounter(){
             </div>
             <div id="counterOpenInfo" class="small" style="margin-top:6px">Chọn bàn để gửi món và thanh toán sau.</div>
           </div>
-          <label><b>Ghi chú món gọi thêm</b></label>
+          <label><b>Ghi chú</b></label>
           <textarea id="counterNote" class="counter-note" placeholder="Ít đá, ít đường, ghi chú..."></textarea>
           <div id="counterOpenBillSummary" class="small" style="margin:8px 0"></div>
           <div class="total"><span>Món đang chọn</span><span id="counterTotal">0đ</span></div>
           <div class="payment-box">
-            <div class="payment-title">💳 Thanh toán khi khách ra về</div>
+            <div class="payment-title">Thanh toán</div>
             <div class="payment-methods">
               <button id="payCashBtn" class="pay-method active" type="button" onclick="setCounterPayment('cash')">💵 Tiền mặt</button>
               <button id="payTransferBtn" class="pay-method" type="button" onclick="setCounterPayment('transfer')">🏦 Chuyển khoản</button>
@@ -2407,8 +2436,10 @@ function renderCounter(){
               <div class="bank-line"><b>MB BANK • 0976020701</b><br>DINH THI MAI SEN<br><span id="counterTransferAmount"></span></div>
             </div>
           </div>
-          <button class="primary counter-submit" onclick="sendCounterItems()">🍹 Gửi món / In tem</button>
-          <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="margin-top:7px;background:#173d2d;color:#fff" onclick="payOpenTable()">💳 Thanh toán & đóng bàn</button>
+          <div class="counter-cart-actions">
+          <button class="primary counter-submit" onclick="sendCounterItems()">Gửi món • In tem</button>
+          <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="background:#173d2d;color:#fff" onclick="payOpenTable()">Thanh toán • Đóng bàn</button>
+          </div>
         </div>
       </div>
     </div>
