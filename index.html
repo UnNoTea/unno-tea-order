@@ -1979,7 +1979,15 @@ body.customer-display-mode #customerDisplay #cdIdle.menu-awake .cd-idle-menu{dis
 #customerDisplay{width:100vw!important;height:100vh!important}
 #cdIdle .cd-idle-banners,#cdIdle .cd-idle-menu{width:100%!important;height:100%!important}
 </style>
-</head>
+<style id="unno-table-floor-v419">
+.table-floor-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.table-floor-head h2{margin:0 0 3px}
+.table-floor-grid{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:12px}
+.table-card{border:0;border-radius:16px;padding:18px 10px;min-height:105px;cursor:pointer;text-align:center;box-shadow:0 4px 14px #0000000d;transition:.15s}
+.table-card:hover{transform:translateY(-2px)}.table-card.empty{background:#ececec;color:#555}.table-card.open{background:#dff3e7;color:#123d2d;border:2px solid #2d8b57}
+.table-card .tn{font-size:23px;font-weight:900}.table-card .ts{font-size:11px;margin-top:7px}.table-card .tt{font-size:15px;font-weight:900;margin-top:5px}
+.counter-work-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;background:#f7f3e9;border-radius:12px;padding:8px 10px}.counter-work-head b{font-size:20px;color:#173d2d}
+@media(max-width:900px){.table-floor-grid{grid-template-columns:repeat(3,1fr);gap:8px}.table-card{min-height:88px;padding:13px 6px}.table-card .tn{font-size:19px}}
+</style></head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
 
@@ -2348,6 +2356,12 @@ function renderCounter(){
         <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="tab" onclick="window.open('/?display=1','unnoCustomerDisplay','width=1100,height=650')">🖥 Màn hình khách</button><button class="tab" onclick="clearCounterCart()">🗑 Xóa giỏ</button></div>
       </div>
     </div>
+    <div id="counterTableFloor">
+      <div class="table-floor-head"><div><h2>🪑 Sơ đồ bàn</h2><div class="small">Xanh = đang có đơn • Xám = bàn trống</div></div><button class="tab" onclick="refreshTableFloor()">↻ Cập nhật</button></div>
+      <div id="tableFloorGrid" class="table-floor-grid"></div>
+    </div>
+    <div id="counterOrderWorkspace" style="display:none">
+      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">← Sơ đồ bàn</button><b id="counterWorkTable">Bàn</b></div>
     <div class="counter-wrap">
       <div class="counter-menu">
         <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="Tìm món... (ví dụ: trà sữa, matcha, xoài, nem, trà trái cây...)" oninput="renderCounterMenu()"></div>
@@ -2397,8 +2411,9 @@ function renderCounter(){
           <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="margin-top:7px;background:#173d2d;color:#fff" onclick="payOpenTable()">💳 Thanh toán & đóng bàn</button>
         </div>
       </div>
+    </div>
     </div>`;
-  renderCounterMenu();renderCounterCart();
+  renderCounterMenu();renderCounterCart();refreshTableFloor();
   const tableSel=document.getElementById("counterTableSelect");
   if(tableSel&&counterOpenTable)tableSel.value=counterOpenTable;
   if(counterOpenTable)loadOpenTable(counterOpenTable);
@@ -2473,6 +2488,30 @@ function updateCounterPaymentUI(){
   if(qr&&total>0)qr.src=counterVietQR(total);
 }
 
+let tableFloorOrders={};
+function isTableNumber(v){return /^\d+$/.test(String(v||"").trim())}
+function orderIsPaid(o){return (o.note||"").includes("[THANH TOÁN:") || o.status==="Hoàn thành"}
+async function refreshTableFloor(){
+  if(!sb)return;
+  const {data,error}=await sb.from("orders").select("id,table_number,status,note,created_at,order_items(price,quantity)").order("created_at",{ascending:false}).limit(500);
+  if(error)return;
+  tableFloorOrders={};
+  (data||[]).forEach(o=>{const t=String(o.table_number||"").trim();if(isTableNumber(t)&&!orderIsPaid(o)&&!tableFloorOrders[t])tableFloorOrders[t]=o});
+  const grid=document.getElementById("tableFloorGrid");if(!grid)return;
+  grid.innerHTML=Array.from({length:30},(_,i)=>{const n=String(i+1),o=tableFloorOrders[n];const total=o?(o.order_items||[]).reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0):0;return `<button class="table-card ${o?"open":"empty"}" onclick="openTableWorkspace('${n}')"><div class="tn">Bàn ${n}</div><div class="ts">${o?"● ĐANG CÓ ĐƠN":"Bàn trống"}</div>${o?`<div class="tt">${money(total)}</div>`:""}</button>`}).join("");
+}
+async function openTableWorkspace(n){
+  counterOpenTable=String(n);document.getElementById("counterTableFloor").style.display="none";document.getElementById("counterOrderWorkspace").style.display="";
+  const wt=document.getElementById("counterWorkTable");if(wt)wt.textContent="Bàn "+n;
+  const sel=document.getElementById("counterTableSelect");if(sel)sel.value=n;
+  await loadOpenTable(n);
+}
+function backToTableFloor(){
+  cart=[];setCart();counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";counterOpenTable="";
+  document.getElementById("counterOrderWorkspace").style.display="none";document.getElementById("counterTableFloor").style.display="";
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"idle",ts:Date.now()}));refreshTableFloor();
+}
+
 function openTableMarker(){return "[CHƯA THANH TOÁN]";}
 function paidMarker(method){return method==="transfer"?"[THANH TOÁN: CHUYỂN KHOẢN]":"[THANH TOÁN: TIỀN MẶT]";}
 function openTableTotal(){return counterOpenItems.reduce((a,x)=>a+Number(x.price||0)*Number(x.quantity||0),0)}
@@ -2487,7 +2526,7 @@ async function loadOpenTable(tableNo){
   if(!sb)return;
   const {data,error}=await sb.from("orders").select("*,order_items(*)").eq("table_number",counterOpenTable).order("created_at",{ascending:false}).limit(20);
   if(error){if(info)info.textContent=error.message;return}
-  const open=(data||[]).find(o=>(o.note||"").includes(openTableMarker()));
+  const open=(data||[]).find(o=>!orderIsPaid(o));
   if(open){
     counterOpenOrderId=open.id;
     counterOpenItems=open.order_items||[];
@@ -2552,6 +2591,7 @@ async function payOpenTable(){
   const cash=document.getElementById("counterCashReceived");if(cash)cash.value="";
   updateCounterPaymentUI();
   if(confirm(`Đã thanh toán Bàn ${counterOpenTable}: ${money(total)}\\n\\nIn hóa đơn thanh toán?`))printBill(paidId);
+  setTimeout(()=>backToTableFloor(),300);
 }
 
 function cupLabelItems(snapshot){
