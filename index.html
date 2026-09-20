@@ -2958,6 +2958,9 @@ document.getElementById("ordersModal").addEventListener("click",e=>{if(e.target=
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOptions();closeCart();closeMyOrders()}});
 document.querySelectorAll(".tab[data-v]").forEach(b=>b.onclick=()=>showAdmin(b.dataset.v));
 
+function cdMenuName(g){
+  return String((g&&g.name)||"").trim();
+}
 function cdMenuPrice(g){
   const vs=(g.availableVariants||[]).slice().sort((a,b)=>Number(a.price)-Number(b.price));
   if(!vs.length)return "";
@@ -2972,7 +2975,7 @@ function cdMenuHTML(compact=false){
   gs.forEach(g=>{if(!map.has(g.cat)){map.set(g.cat,[]);cats.push(g.cat)}map.get(g.cat).push(g)});
   return `<div class="cd-menu-shell ${compact?"compact":""}">
     <div class="cd-menu-head"><div class="cd-menu-brand">UnNo Tea<small>GOOD TEA • GOOD MOOD</small></div><div class="cd-menu-slogan">Một ly trà – Ngàn cảm xúc ♡</div></div>
-    <div class="cd-menu-board">${cats.map(cat=>`<section class="cd-menu-cat"><h3>${esc(cat)}</h3>${map.get(cat).map(g=>`<div class="cd-menu-row"><span class="cd-menu-name">${esc(g.base||g.name||"")}</span><span class="cd-menu-dots"></span><span class="cd-menu-price">${esc(cdMenuPrice(g))}</span></div>`).join("")}</section>`).join("")}</div>
+    <div class="cd-menu-board">${cats.map(cat=>`<section class="cd-menu-cat"><h3>${esc(cat)}</h3>${map.get(cat).map(g=>`<div class="cd-menu-row"><span class="cd-menu-name">${esc(cdMenuName(g))}</span><span class="cd-menu-dots"></span><span class="cd-menu-price">${esc(cdMenuPrice(g))}</span></div>`).join("")}</section>`).join("")}</div>
     <div class="cd-menu-foot"><span>Giá hiển thị theo menu hiện tại • Món hết hàng & topping được ẩn</span><b>UnNo Tea</b></div>
   </div>`;
 }
