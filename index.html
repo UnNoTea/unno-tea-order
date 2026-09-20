@@ -2142,6 +2142,18 @@ async function warnIfScannedTableOccupied(){
 }
 setTimeout(warnIfScannedTableOccupied,1400);
 
+
+async function restoreQrTableTracking(){
+  if(!sb||orderMode!=="table"||!/^\d+$/.test(String(table||"")))return;
+  try{
+    const open=await findOpenTableOrder(String(table));
+    if(open && !isStaffCounterOrder(open) && open.customer_token){
+      saveTrackedOrder(open.id,open.customer_token);
+    }
+  }catch(e){}
+}
+setTimeout(restoreQrTableTracking,900);
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="config.js"></script>
@@ -2291,6 +2303,7 @@ async function placeOrder(opts={}){
   }
   let orderId=Date.now();
   const customerToken=counterOrdering?null:(crypto.randomUUID?crypto.randomUUID():(Date.now()+"-"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)));
+  let trackingToken=customerToken;
   const isQrTable=!counterOrdering&&orderMode==="table"&&/^\d+$/.test(String(tableValue));
   let joinedExisting=false;
   if(isQrTable){
@@ -2304,6 +2317,7 @@ async function placeOrder(opts={}){
       orderId=openBill.id;joinedExisting=true;
       const mergedNote=markQrSource(openBill.note||"");
       const keepToken=openBill.customer_token||customerToken;
+      trackingToken=keepToken;
       const {error}=await sb.from("orders").update({status:"Mới",note:mergedNote,customer_token:keepToken}).eq("id",orderId);
       if(error)return alert(error.message);
     }else{
@@ -2322,7 +2336,7 @@ async function placeOrder(opts={}){
     if(!joinedExisting)await sb.from("orders").delete().eq("id",orderId);
     return alert(r.error.message)
   }
-  if(!counterOrdering && customerToken)saveTrackedOrder(orderId,customerToken);
+  if(!counterOrdering && trackingToken)saveTrackedOrder(orderId,trackingToken);
   cart=[];setCart();closeCart();document.getElementById("note").value="";
   if(!counterOrdering && orderMode!=="table"){
     document.getElementById("customerName").value="";
