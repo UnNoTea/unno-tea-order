@@ -2315,7 +2315,7 @@ async function placeOrder(opts={}){
         return;
       }
       orderId=openBill.id;joinedExisting=true;
-      const mergedNote=markQrSource(openBill.note||"");
+      const mergedNote=qrAddEventNote(markQrSource(openBill.note||""));
       const keepToken=openBill.customer_token||customerToken;
       trackingToken=keepToken;
       const {error}=await sb.from("orders").update({status:"Mới",note:mergedNote,customer_token:keepToken}).eq("id",orderId);
@@ -2618,6 +2618,14 @@ function isNotifyOrder(o){
   return online||qr;
 }
 const SEEN_NOTIFY_KEY="unno_seen_notify_orders_v2";
+
+const QR_ADD_EVENT_PREFIX="[QR GỌI THÊM:";
+function qrAddEventNote(note){
+  note=String(note||"").replace(/\n?\[QR GỌI THÊM:[^\]]+\]/g,"").trim();
+  return [note,`${QR_ADD_EVENT_PREFIX}${Date.now()}]`].filter(Boolean).join("\n");
+}
+let lastQrAddEventSeen="";
+
 function getSeenNotifyIds(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_NOTIFY_KEY)||"[]").map(String))}catch(e){return new Set()}}
 function saveSeenNotifyIds(set){try{localStorage.setItem(SEEN_NOTIFY_KEY,JSON.stringify([...set].slice(-500)))}catch(e){}}
 
@@ -2948,6 +2956,17 @@ async function checkNewOrdersInBackground(){
     if(error)return;
     const eligible=(data||[]).filter(isNotifyOrder);
     const ids=new Set(eligible.map(o=>String(o.id)));
+    let newestQrEvt="";
+    for(const o of eligible){
+      const m=String(o.note||"").match(/\[QR GỌI THÊM:([^\]]+)\]/);
+      if(m){newestQrEvt=String(o.id)+":"+m[1];break}
+    }
+    if(lastQrAddEventSeen && newestQrEvt && newestQrEvt!==lastQrAddEventSeen){
+      lastQrAddEventSeen=newestQrEvt;
+      showNewOrderAlert(1);
+    }else if(!lastQrAddEventSeen && newestQrEvt){
+      lastQrAddEventSeen=newestQrEvt;
+    }
     const seen=getSeenNotifyIds();
     if(knownOrderIds){
       const fresh=[...ids].filter(id=>!knownOrderIds.has(id)&&!seen.has(id));
@@ -2965,6 +2984,14 @@ function handleRealtimeOrderChange(payload){
     if(!knownOrderIds)knownOrderIds=new Set();
     if(!knownOrderIds.has(id)&&!seen.has(id)){
       knownOrderIds.add(id);
+      showNewOrderAlert(1);
+    }
+  }
+  if(payload?.eventType==="UPDATE" && payload.new?.id!=null && isNotifyOrder(payload.new)){
+    const m=String(payload.new.note||"").match(/\[QR GỌI THÊM:([^\]]+)\]/);
+    const evt=m?String(payload.new.id)+":"+m[1]:"";
+    if(evt && evt!==lastQrAddEventSeen){
+      lastQrAddEventSeen=evt;
       showNewOrderAlert(1);
     }
   }
