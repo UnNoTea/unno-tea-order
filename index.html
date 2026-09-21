@@ -2974,15 +2974,19 @@ async function payOpenTable(){
   }else paymentText=paidMarker("transfer")+"\\nMB BANK - 0976020701 - DINH THI MAI SEN";
   const clean=(counterOpenNote||"").replace(openTableMarker(),"").trim();
   const note=[clean,paymentText].filter(Boolean).join("\\n");
+  // Màn hình phụ phải hiện QR/tiền mặt trước khi xác nhận hoàn tất.
+  const displayReceived=counterPaymentMethod==="cash"?Number(document.getElementById("counterCashReceived")?.value||0):0;
+  publishCustomerDisplay({mode:"payment",total,payment:counterPaymentMethod,received:displayReceived,change:Math.max(0,displayReceived-total)});
+  await new Promise(r=>setTimeout(r,180));
   const {error}=await sb.from("orders").update({note,status:"Hoàn thành"}).eq("id",counterOpenOrderId);
   if(error)return alert(error.message);
-  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"thanks",total,items:openTableDisplayItems(),payment:counterPaymentMethod,ts:Date.now()}));
   const paidId=counterOpenOrderId;
   counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";
   const info=document.getElementById("counterOpenInfo");if(info)info.textContent=`✅ Bàn ${counterOpenTable} đã thanh toán.`;
   const cash=document.getElementById("counterCashReceived");if(cash)cash.value="";
   updateCounterPaymentUI();
   if(confirm(`Đã thanh toán Bàn ${counterOpenTable}: ${money(total)}\\n\\nIn hóa đơn thanh toán?`))printBill(paidId);
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"thanks",total,payment:counterPaymentMethod,ts:Date.now()}));
   setTimeout(()=>backToTableFloor(),300);
 }
 
