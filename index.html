@@ -2064,6 +2064,100 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 <style id="unno-cancel-table-order-v241">
 #counterOrderWorkspace button.danger{background:#fff1f1!important;color:#b42318!important;border:1px solid #f2b8b5!important}
 </style>
+
+<style id="unno-counter-ux-v250">
+/* ===== UnNo Tea POS V4.25 — cleaner staff ordering ===== */
+#counterOrderWorkspace{background:#f6f7f5!important;padding:0!important}
+#counterOrderWorkspace .counter-topbar{
+  position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #e6e8e4;
+  padding:10px 12px!important;box-shadow:0 2px 10px rgba(0,0,0,.04)
+}
+#counterOrderWorkspace .counter-topbar .tab{
+  min-height:42px;border-radius:12px!important;font-weight:800!important
+}
+#counterOrderWorkspace .counter-topbar b#counterWorkTable{
+  font-size:18px!important;color:#173d2d;margin-left:6px
+}
+#counterOrderWorkspace button.danger{margin-left:auto!important}
+
+#counterOrderWorkspace .counter-layout{gap:12px!important;padding:12px!important;align-items:start}
+#counterOrderWorkspace .counter-menu{
+  background:#fff;border:1px solid #e8ebe6;border-radius:18px;padding:12px!important;
+  box-shadow:0 5px 20px rgba(0,0,0,.035)
+}
+#counterOrderWorkspace #counterSearch{
+  height:46px!important;border:1.5px solid #dfe5df!important;border-radius:14px!important;
+  font-size:15px!important;padding:0 14px!important;background:#fafbfa!important
+}
+#counterOrderWorkspace .cats{
+  display:flex!important;gap:7px!important;overflow-x:auto!important;flex-wrap:nowrap!important;
+  padding:10px 0 8px!important;scrollbar-width:none
+}
+#counterOrderWorkspace .cats::-webkit-scrollbar{display:none}
+#counterOrderWorkspace .cats button{
+  flex:0 0 auto!important;border-radius:999px!important;padding:9px 13px!important;
+  min-height:38px!important;font-size:13px!important;white-space:nowrap!important
+}
+#counterOrderWorkspace .cats button.active{font-weight:850!important}
+
+#counterOrderWorkspace .menu-grid{gap:9px!important}
+#counterOrderWorkspace .item{
+  border:1px solid #e5e9e4!important;border-radius:15px!important;padding:9px!important;
+  box-shadow:none!important;background:#fff!important
+}
+#counterOrderWorkspace .item:hover{transform:none!important}
+#counterOrderWorkspace .item img{border-radius:11px!important}
+#counterOrderWorkspace .item h3{font-size:14px!important;line-height:1.25!important;margin:7px 0 4px!important}
+#counterOrderWorkspace .item .price{font-size:14px!important;font-weight:850!important}
+#counterOrderWorkspace .item button{min-height:38px!important;border-radius:10px!important;font-weight:800!important}
+
+#counterOrderWorkspace .counter-cart{
+  background:#fff!important;border:1px solid #e5e9e4!important;border-radius:18px!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.06)!important;padding:14px!important
+}
+#counterOrderWorkspace .counter-cart h3{font-size:17px!important;margin:0 0 8px!important}
+#counterOrderWorkspace #counterOpenInfo{
+  border-radius:12px!important;padding:9px 10px!important;background:#f3f8f4!important;margin-bottom:8px!important
+}
+#counterOrderWorkspace .cartline{padding:9px 0!important;border-bottom:1px solid #edf0ec!important}
+#counterOrderWorkspace .counter-total{
+  position:sticky;bottom:0;background:#fff;padding-top:10px!important;border-top:1px solid #e7eae6
+}
+
+/* Mobile POS: focus on menu; cart becomes a clean bottom sheet */
+@media(max-width:760px){
+  #counterOrderWorkspace .counter-topbar{
+    display:grid!important;grid-template-columns:1fr auto!important;gap:7px!important;align-items:center!important
+  }
+  #counterOrderWorkspace .counter-topbar .tab:first-child{grid-column:1/2!important}
+  #counterOrderWorkspace .counter-topbar button.danger{grid-column:2/3!important;margin:0!important}
+  #counterOrderWorkspace .counter-topbar #counterWorkTable{
+    grid-column:1/3!important;grid-row:1!important;text-align:center!important;pointer-events:none
+  }
+  #counterOrderWorkspace .counter-layout{display:block!important;padding:8px!important}
+  #counterOrderWorkspace .counter-menu{border:0!important;border-radius:14px!important;padding:9px!important}
+  #counterOrderWorkspace #counterSearch{position:sticky;top:64px;z-index:20;background:#fff!important}
+  #counterOrderWorkspace .cats{position:sticky;top:116px;z-index:19;background:#fff!important;margin:0 -2px!important}
+  #counterOrderWorkspace .menu-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  #counterOrderWorkspace .item{padding:8px!important}
+  #counterOrderWorkspace .item h3{font-size:13px!important;min-height:32px}
+  #counterOrderWorkspace .item .price{font-size:13px!important}
+  #counterOrderWorkspace .mobile-counter-bar{
+    left:10px!important;right:10px!important;bottom:10px!important;border-radius:16px!important;
+    box-shadow:0 8px 30px rgba(0,0,0,.18)!important;padding:10px 12px!important
+  }
+  #counterOrderWorkspace .counter-cart.mobile-open{
+    border-radius:22px 22px 0 0!important;padding:15px!important
+  }
+}
+
+/* Desktop: more room for products, smaller fixed bill column */
+@media(min-width:761px){
+  #counterOrderWorkspace .counter-layout{grid-template-columns:minmax(0,1fr) 330px!important}
+  #counterOrderWorkspace .menu-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important}
+  #counterOrderWorkspace .counter-cart{position:sticky!important;top:78px!important;max-height:calc(100vh - 92px)!important;overflow:auto!important}
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2496,7 +2590,7 @@ function renderCounter(){
   document.getElementById("adminView").innerHTML=`
     <div class="panel" style="margin-bottom:11px">
       <div class="row">
-        <div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Chọn bàn → chọn món → bấm Xong/Về sơ đồ bàn. Hệ thống tự lưu món và in tem.</div></div>
+        <div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Chọn bàn → chạm món cần gọi → Xong. Món tự lưu và in tem.</div></div>
         <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="tab" onclick="window.open('/?display=1','unnoCustomerDisplay','width=1100,height=650')">🖥 Màn hình khách</button><button class="tab" onclick="clearCounterCart()">🗑 Xóa giỏ</button></div>
       </div>
     </div>
@@ -2505,10 +2599,10 @@ function renderCounter(){
       <div id="tableFloorGrid" class="table-floor-grid"></div>
     </div>
     <div id="counterOrderWorkspace" style="display:none">
-      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">← Xong • Về sơ đồ bàn</button><button class="tab danger" onclick="cancelCurrentTableOrder()">🗑 Hủy đơn</button><b id="counterWorkTable">Bàn</b></div>
+      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">✓ Xong • Lưu & về bàn</button><button class="tab danger" onclick="cancelCurrentTableOrder()">Hủy bàn</button><b id="counterWorkTable">Bàn</b></div>
     <div class="counter-wrap">
       <div class="counter-menu">
-        <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="Tìm món... (ví dụ: trà sữa, matcha, xoài, nem, trà trái cây...)" oninput="renderCounterMenu()"></div>
+        <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="🔎 Tìm nhanh món... (ví dụ: trà sữa, matcha, xoài, nem, trà trái cây...)" oninput="renderCounterMenu()"></div>
         <div id="counterCats" class="counter-catbar">${cats.map(c=>`<button class="counter-cat ${c===counterCategory?'active':''}" onclick="setCounterCat(this,'${esc(c).replace(/'/g,"&#39;")}')">${esc(c)}</button>`).join("")}</div>
         <div id="counterMenu" class="grid"></div>
       </div>
