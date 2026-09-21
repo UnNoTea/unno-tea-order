@@ -2647,7 +2647,7 @@ function renderCounter(){
           </div>
           <div class="counter-cart-actions">
           
-          <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="background:#173d2d;color:#fff" onclick="payOpenTable()">Thanh toán • Đóng bàn</button>
+          <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="background:#173d2d;color:#fff" onclick="payOpenTable()">Thanh toán ngay • Đóng bàn</button>
           </div>
         </div>
       </div>
@@ -2959,7 +2959,11 @@ async function sendCounterItems(opts={}){
 }
 async function payOpenTable(){
   if(!counterOpenTable)return alert("Hãy chọn bàn trước.");
-  if(cart.length)return alert("Giỏ đang có món chưa gửi. Hãy bấm “Gửi món / In tem” trước khi thanh toán.");
+  // Có món vừa chọn thì tự lưu vào bill + in tem, sau đó thanh toán luôn.
+  if(cart.length){
+    const ok=await sendCounterItems({silent:true,stayOnTable:true});
+    if(!ok)return;
+  }
   if(!counterOpenOrderId)return alert("Bàn này chưa có đơn để thanh toán.");
   const total=openTableTotal();
   let paymentText="";
