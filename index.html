@@ -2178,21 +2178,14 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 }
 </style>
 
-<style id="unno-virtual-keyboard-v270">
-#unnoVKeyboard{display:none;position:fixed;left:0;right:0;bottom:0;z-index:30000;background:#f7f7f5;
- border-top:1px solid #d8ddd8;padding:8px 10px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px #0002}
-#unnoVKeyboard.show{display:block}
-.vk-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
-.vk-value{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
-.vk-done{border:0;border-radius:10px;padding:8px 16px;background:#164b36;color:#fff;font-weight:800}
-.vk-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
-.vk-key{min-height:43px!important;border:1px solid #d8ddd8!important;border-radius:9px!important;background:#fff!important;color:#111!important;
- font-size:16px!important;font-weight:700!important;padding:4px!important}
+<style id="unno-virtual-keyboard-v271">
+#unnoVKeyboard{display:none;position:fixed;left:0;right:0;bottom:0;z-index:30000;background:#f7f7f5;border-top:1px solid #d8ddd8;padding:8px 10px;box-shadow:0 -8px 30px #0002}
+#unnoVKeyboard.show{display:block}.vk-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.vk-value{font-weight:800}.vk-done{border:0;border-radius:10px;padding:8px 16px;background:#164b36;color:#fff;font-weight:800}
+.vk-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}.vk-key{min-height:43px!important;border:1px solid #d8ddd8!important;border-radius:9px!important;background:#fff!important;color:#111!important;font-size:16px!important;font-weight:700!important;padding:4px!important}
 .vk-key.wide{grid-column:span 2}.vk-key.space{grid-column:span 5}.vk-key.action{background:#e9eeea!important}
-.vk-grid.numeric{grid-template-columns:repeat(3,1fr);max-width:430px;margin:auto}
-.vk-grid.numeric .vk-key{min-height:52px!important;font-size:20px!important}
-body.vk-open #adminView{padding-bottom:280px}
-@media(max-width:760px){.vk-grid{grid-template-columns:repeat(10,1fr);gap:3px}.vk-key{font-size:13px!important;min-height:40px!important}}
+.vk-grid.numeric{grid-template-columns:repeat(3,1fr);max-width:430px;margin:auto}.vk-grid.numeric .vk-key{min-height:52px!important;font-size:20px!important}
+body.vk-open #adminView{padding-bottom:285px}
 </style>
 </head>
 <body>
@@ -3164,89 +3157,7 @@ function printCupLabels(w,orderId,snapshot,staffNote=""){
     .bottom{margin-top:auto;border-top:.25mm solid #000;padding-top:.8mm}
   </style></head><body>${labels.join("")}
   <script>window.onload=()=>setTimeout(()=>{window.focus();window.print();},180);<\/script>
-  
-<div id="unnoVKeyboard" aria-hidden="true">
-  <div class="vk-head"><div id="vkValue" class="vk-value">Nhập nội dung</div><button type="button" class="vk-done" onclick="vkClose()">Xong</button></div>
-  <div id="vkKeys" class="vk-grid"></div>
-</div>
-
-<script id="unno-virtual-keyboard-js-v270">
-let vkTarget=null, vkShift=false;
-function vkIsAdminVisible(){
-  const a=document.getElementById("admin"),d=document.getElementById("dash");
-  return a&&d&&a.style.display==="block"&&d.style.display!=="none";
-}
-function vkNeedsKeyboard(el){
-  if(!vkIsAdminVisible()||!el||el.readOnly||el.disabled)return false;
-  if(el.tagName==="TEXTAREA")return true;
-  if(el.tagName!=="INPUT")return false;
-  return ["text","search","number","tel","email","password"].includes((el.type||"text").toLowerCase());
-}
-function vkOpen(el){
-  if(!vkNeedsKeyboard(el))return;
-  vkTarget=el;
-  // prevent Windows touch keyboard from competing with the in-app keyboard where supported
-  try{el.setAttribute("inputmode","none")}catch(e){}
-  document.body.classList.add("vk-open");
-  const box=document.getElementById("unnoVKeyboard");
-  box.classList.add("show");box.setAttribute("aria-hidden","false");
-  vkRender();
-}
-function vkClose(){
-  const box=document.getElementById("unnoVKeyboard");
-  box?.classList.remove("show");box?.setAttribute("aria-hidden","true");
-  document.body.classList.remove("vk-open");
-  if(vkTarget){
-    // restore useful input mode after closing
-    if(vkTarget.id==="counterCashReceived")vkTarget.setAttribute("inputmode","numeric");
-    else vkTarget.setAttribute("inputmode","text");
-  }
-  vkTarget=null;
-}
-function vkNumeric(){
-  if(!vkTarget)return false;
-  return vkTarget.id==="counterCashReceived" || ["number","tel"].includes((vkTarget.type||"").toLowerCase());
-}
-function vkRender(){
-  if(!vkTarget)return;
-  const keys=document.getElementById("vkKeys"),val=document.getElementById("vkValue");
-  val.textContent=vkTarget.placeholder||"Nhập nội dung";
-  if(vkNumeric()){
-    keys.className="vk-grid numeric";
-    keys.innerHTML=["1","2","3","4","5","6","7","8","9","⌫","0","Xóa"].map(k=>
-      `<button type="button" class="vk-key ${k==="⌫"||k==="Xóa"?"action":""}" onclick="vkPress('${k}')">${k}</button>`).join("");
-    return;
-  }
-  keys.className="vk-grid";
-  const rows=["1234567890","qwertyuiop","asdfghjkl","zxcvbnm"];
-  keys.innerHTML=rows.map(r=>[...r].map(k=>`<button type="button" class="vk-key" onclick="vkPress('${k}')">${vkShift?k.toUpperCase():k}</button>`).join("")).join("")
-    +`<button type="button" class="vk-key action wide" onclick="vkShift=!vkShift;vkRender()">⇧</button>
-      <button type="button" class="vk-key space" onclick="vkPress(' ')">Dấu cách</button>
-      <button type="button" class="vk-key action" onclick="vkPress('⌫')">⌫</button>
-      <button type="button" class="vk-key action wide" onclick="vkPress('Xóa')">Xóa</button>`;
-}
-function vkPress(k){
-  if(!vkTarget)return;
-  let v=vkTarget.value||"", a=vkTarget.selectionStart??v.length, b=vkTarget.selectionEnd??a;
-  if(k==="⌫"){
-    if(a!==b)v=v.slice(0,a)+v.slice(b);
-    else if(a>0){v=v.slice(0,a-1)+v.slice(b);a--}
-  }else if(k==="Xóa"){v="";a=0}
-  else{
-    let x=vkShift?k.toUpperCase():k;
-    v=v.slice(0,a)+x+v.slice(b);a+=x.length;
-  }
-  vkTarget.value=v;
-  vkTarget.dispatchEvent(new Event("input",{bubbles:true}));
-  try{vkTarget.setSelectionRange(a,a)}catch(e){}
-}
-document.addEventListener("focusin",e=>{if(vkNeedsKeyboard(e.target))vkOpen(e.target)});
-document.addEventListener("pointerdown",e=>{
-  const box=document.getElementById("unnoVKeyboard");
-  if(box?.classList.contains("show")&&!box.contains(e.target)&&e.target!==vkTarget&&!vkNeedsKeyboard(e.target))vkClose();
-});
-</script>
-</body></html>`);
+  </body></html>`);
   w.document.close();
 }
 async function submitCounterOrder(){
@@ -4046,4 +3957,23 @@ document.addEventListener("DOMContentLoaded",()=>updateOrderModeUI());
 </script>
 <script id="unno-pwa-register">if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}</script>
 
+
+<div id="unnoVKeyboard" aria-hidden="true">
+ <div class="vk-head"><div id="vkValue" class="vk-value">Nhập nội dung</div><button type="button" class="vk-done" onclick="vkClose()">Xong</button></div>
+ <div id="vkKeys" class="vk-grid"></div>
+</div>
+<script id="unno-virtual-keyboard-js-v271">
+let vkTarget=null,vkShift=false;
+function vkAdmin(){const a=document.getElementById("admin"),d=document.getElementById("dash");return a&&d&&a.style.display==="block"&&d.style.display!=="none"}
+function vkNeed(el){if(!vkAdmin()||!el||el.readOnly||el.disabled)return false;if(el.tagName==="TEXTAREA")return true;if(el.tagName!=="INPUT")return false;return ["text","search","number","tel"].includes((el.type||"text").toLowerCase())}
+function vkOpen(el){if(!vkNeed(el))return;vkTarget=el;document.body.classList.add("vk-open");document.getElementById("unnoVKeyboard").classList.add("show");vkRender()}
+function vkClose(){document.getElementById("unnoVKeyboard")?.classList.remove("show");document.body.classList.remove("vk-open");vkTarget=null}
+function vkNumeric(){return vkTarget&&(vkTarget.id==="counterCashReceived"||["number","tel"].includes((vkTarget.type||"").toLowerCase()))}
+function vkRender(){if(!vkTarget)return;const keys=document.getElementById("vkKeys");document.getElementById("vkValue").textContent=vkTarget.placeholder||"Nhập nội dung";
+ if(vkNumeric()){keys.className="vk-grid numeric";keys.innerHTML=["1","2","3","4","5","6","7","8","9","⌫","0","Xóa"].map(k=>`<button type="button" class="vk-key ${k==="⌫"||k==="Xóa"?"action":""}" onclick="vkPress('${k}')">${k}</button>`).join("");return}
+ keys.className="vk-grid";const rows=["1234567890","qwertyuiop","asdfghjkl","zxcvbnm"];
+ keys.innerHTML=rows.map(r=>[...r].map(k=>`<button type="button" class="vk-key" onclick="vkPress('${k}')">${vkShift?k.toUpperCase():k}</button>`).join("")).join("")+`<button type="button" class="vk-key action wide" onclick="vkShift=!vkShift;vkRender()">⇧</button><button type="button" class="vk-key space" onclick="vkPress(' ')">Dấu cách</button><button type="button" class="vk-key action" onclick="vkPress('⌫')">⌫</button><button type="button" class="vk-key action wide" onclick="vkPress('Xóa')">Xóa</button>`}
+function vkPress(k){if(!vkTarget)return;let v=vkTarget.value||"",a=vkTarget.selectionStart??v.length,b=vkTarget.selectionEnd??a;if(k==="⌫"){if(a!==b)v=v.slice(0,a)+v.slice(b);else if(a>0){v=v.slice(0,a-1)+v.slice(b);a--}}else if(k==="Xóa"){v="";a=0}else{let x=vkShift?k.toUpperCase():k;v=v.slice(0,a)+x+v.slice(b);a+=x.length}vkTarget.value=v;vkTarget.dispatchEvent(new Event("input",{bubbles:true}));try{vkTarget.setSelectionRange(a,a)}catch(e){}}
+document.addEventListener("focusin",e=>{if(vkNeed(e.target))vkOpen(e.target)});
+</script>
 </body></html>
