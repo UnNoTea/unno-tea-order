@@ -2170,6 +2170,13 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 .history-foot{margin-bottom:9px}
 @media(max-width:650px){.history-head{display:block}#historySearch{width:100%;margin-top:9px}.history-source{white-space:nowrap}}
 </style>
+
+<style id="unno-cash-input-fix-v263">
+.cash-formatted-preview{
+  margin-top:5px;padding:6px 10px;border-radius:9px;background:#f3f7f3;
+  font-size:15px;font-weight:850;text-align:right;color:#164b36
+}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2649,7 +2656,8 @@ function renderCounter(){
             </div>
             <div id="counterCashBox" class="cash-box">
               <label><b>Khách đưa</b></label>
-              <input id="counterCashReceived" type="text" inputmode="numeric" autocomplete="off" placeholder="VD: 1.000.000" oninput="formatCounterCashInput(this);updateCounterChange()">
+              <input id="counterCashReceived" type="text" inputmode="numeric" autocomplete="off" placeholder="VD: 1000000" oninput="sanitizeCounterCashInput(this);updateCounterChange()">
+<div id="counterCashFormatted" class="cash-formatted-preview">0đ</div>
               <div class="change-row"><span>Tiền thừa trả khách</span><span id="counterChange">0đ</span></div>
             </div>
             <div id="counterTransferBox" class="transfer-preview" style="display:none">
@@ -2737,15 +2745,17 @@ function counterVietQR(amount,orderCode=""){
 function cashNumber(v){
   return Number(String(v??"").replace(/[^\d]/g,""))||0;
 }
-function formatCounterCashInput(input){
-  const n=String(input.value||"").replace(/[^\d]/g,"");
-  input.value=n?n.replace(/\B(?=(\d{3})+(?!\d))/g,"."):"";
+function sanitizeCounterCashInput(input){
+  // Không chèn dấu vào chính ô đang gõ để tránh con trỏ nhảy và đảo số.
+  input.value=String(input.value||"").replace(/[^\d]/g,"");
 }
 
 function updateCounterChange(){
   const total=counterGrandTotal(),received=cashNumber(document.getElementById("counterCashReceived")?.value);
   const el=document.getElementById("counterChange");
   if(el)el.textContent=money(Math.max(0,received-total));
+  const preview=document.getElementById("counterCashFormatted");
+  if(preview)preview.textContent=received?money(received):"0đ";
 
   // Đồng bộ LIVE sang màn hình phụ kể cả khi món đã được lưu vào bill
   // và giỏ mới đang rỗng.
