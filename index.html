@@ -2649,7 +2649,7 @@ function renderCounter(){
             </div>
             <div id="counterCashBox" class="cash-box">
               <label><b>Khách đưa</b></label>
-              <input id="counterCashReceived" type="number" inputmode="numeric" min="0" step="1000" placeholder="Nhập số tiền khách đưa" oninput="updateCounterChange()">
+              <input id="counterCashReceived" type="text" inputmode="numeric" autocomplete="off" placeholder="VD: 1.000.000" oninput="formatCounterCashInput(this);updateCounterChange()">
               <div class="change-row"><span>Tiền thừa trả khách</span><span id="counterChange">0đ</span></div>
             </div>
             <div id="counterTransferBox" class="transfer-preview" style="display:none">
@@ -2722,17 +2722,42 @@ function setCounterPayment(method){
   if(cash)cash.style.display=method==="cash"?"grid":"none";
   if(transfer)transfer.style.display=method==="transfer"?"block":"none";
   updateCounterPaymentUI();
-  publishCustomerDisplay({mode:counterOpenOrderId?"payment":(cart.length?"order":"idle")});
+  publishCustomerDisplay({
+    mode:(counterOpenOrderId||cart.length)?"payment":"idle",
+    payment:method,
+    received:method==="cash"?cashNumber(document.getElementById("counterCashReceived")?.value):0,
+    change:method==="cash"?Math.max(0,cashNumber(document.getElementById("counterCashReceived")?.value)-counterGrandTotal()):0
+  });
 }
 function counterVietQR(amount,orderCode=""){
   const info=orderCode?`UNNO ${orderCode}`:"THANH TOAN UNNO";
   return `https://img.vietqr.io/image/MB-0976020701-compact2.png?amount=${Math.max(0,Math.round(amount))}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent("DINH THI MAI SEN")}`;
 }
+
+function cashNumber(v){
+  return Number(String(v??"").replace(/[^\d]/g,""))||0;
+}
+function formatCounterCashInput(input){
+  const n=String(input.value||"").replace(/[^\d]/g,"");
+  input.value=n?n.replace(/\B(?=(\d{3})+(?!\d))/g,"."):"";
+}
+
 function updateCounterChange(){
-  const total=counterGrandTotal(),received=Number(document.getElementById("counterCashReceived")?.value||0);
+  const total=counterGrandTotal(),received=cashNumber(document.getElementById("counterCashReceived")?.value);
   const el=document.getElementById("counterChange");
   if(el)el.textContent=money(Math.max(0,received-total));
-  if(counterOrdering && cart.length)publishCustomerDisplay({mode:counterPaymentMethod==="cash"&&received>0?"payment":"order"});
+
+  // Đồng bộ LIVE sang màn hình phụ kể cả khi món đã được lưu vào bill
+  // và giỏ mới đang rỗng.
+  if(counterOrdering && counterOpenTable && counterPaymentMethod==="cash"){
+    publishCustomerDisplay({
+      mode:"payment",
+      total,
+      payment:"cash",
+      received,
+      change:Math.max(0,received-total)
+    });
+  }
 }
 function updateCounterPaymentUI(){
   const total=counterGrandTotal();
@@ -2982,7 +3007,7 @@ async function payOpenTable(){
 
   const total=openTableTotal();
   const received=counterPaymentMethod==="cash"
-    ? Number(document.getElementById("counterCashReceived")?.value||0)
+    ? cashNumber(document.getElementById("counterCashReceived")?.value)
     : 0;
 
   if(counterPaymentMethod==="cash" && received>0 && received<total)
@@ -3123,7 +3148,7 @@ async function submitCounterOrder(){
   const total=counterCartTotal();
   let paymentText="";
   if(counterPaymentMethod==="cash"){
-    const received=Number(document.getElementById("counterCashReceived")?.value||0);
+    const received=cashNumber(document.getElementById("counterCashReceived")?.value);
     if(received>0&&received<total)return alert("Số tiền khách đưa chưa đủ.");
     paymentText=[
       "[THANH TOÁN: TIỀN MẶT]",
@@ -3765,7 +3790,7 @@ function cdState(){
 function publishCustomerDisplay(extra={}){
   if(isCustomerDisplay)return;
   const total=counterGrandTotal();
-  const received=Number(document.getElementById("counterCashReceived")?.value||0);
+  const received=cashNumber(document.getElementById("counterCashReceived")?.value);
   const existing=openTableDisplayItems();
   const current=cart.map(x=>({name:x.name,unitPrice:Number(x.unitPrice||0),qty:Number(x.qty||0)}));
   const allItems=[...existing,...current];
