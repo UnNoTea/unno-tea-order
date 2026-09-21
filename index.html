@@ -2492,7 +2492,7 @@ function renderCounter(){
   document.getElementById("adminView").innerHTML=`
     <div class="panel" style="margin-bottom:11px">
       <div class="row">
-        <div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Nhân viên chọn món và tạo đơn trực tiếp cho khách tại quầy.</div></div>
+        <div><h2 style="margin:0">🧾 Order tại quầy</h2><div class="small">Chọn bàn → chọn món → bấm Xong/Về sơ đồ bàn. Hệ thống tự lưu món và in tem.</div></div>
         <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="tab" onclick="window.open('/?display=1','unnoCustomerDisplay','width=1100,height=650')">🖥 Màn hình khách</button><button class="tab" onclick="clearCounterCart()">🗑 Xóa giỏ</button></div>
       </div>
     </div>
@@ -2501,7 +2501,7 @@ function renderCounter(){
       <div id="tableFloorGrid" class="table-floor-grid"></div>
     </div>
     <div id="counterOrderWorkspace" style="display:none">
-      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">← Sơ đồ bàn</button><b id="counterWorkTable">Bàn</b></div>
+      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">← Xong • Về sơ đồ bàn</button><b id="counterWorkTable">Bàn</b></div>
     <div class="counter-wrap">
       <div class="counter-menu">
         <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="Tìm món... (ví dụ: trà sữa, matcha, xoài, nem, trà trái cây...)" oninput="renderCounterMenu()"></div>
@@ -2548,7 +2548,7 @@ function renderCounter(){
             </div>
           </div>
           <div class="counter-cart-actions">
-          <button class="primary counter-submit" onclick="sendCounterItems()">Gửi món • In tem</button>
+          
           <button id="counterFinalPayBtn" class="counter-submit counter-pay-btn" style="background:#173d2d;color:#fff" onclick="payOpenTable()">Thanh toán • Đóng bàn</button>
           </div>
         </div>
@@ -2747,10 +2747,21 @@ async function openTableWorkspace(n){
   const sel=document.getElementById("counterTableSelect");if(sel)sel.value=n;
   await loadOpenTable(n);
 }
-function backToTableFloor(){
-  cart=[];setCart();counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";counterOpenTable="";
-  document.getElementById("counterOrderWorkspace").style.display="none";document.getElementById("counterTableFloor").style.display="";
-  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"idle",ts:Date.now()}));refreshTableFloor();
+let counterLeavingTable=false;
+async function backToTableFloor(){
+  if(counterLeavingTable)return;
+  counterLeavingTable=true;
+  try{
+    if(cart.length){
+      const ok=await sendCounterItems({silent:true,stayOnTable:true});
+      if(!ok)return;
+    }
+    cart=[];setCart();counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";counterOpenTable="";
+    const ws=document.getElementById("counterOrderWorkspace"),floor=document.getElementById("counterTableFloor");
+    if(ws)ws.style.display="none";if(floor)floor.style.display="";
+    localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"idle",ts:Date.now()}));
+    await refreshTableFloor();
+  }finally{counterLeavingTable=false}
 }
 
 function openTableMarker(){return "[CHƯA THANH TOÁN]";}
@@ -2779,15 +2790,15 @@ async function loadOpenTable(tableNo){
         : `🟢 <b>Bàn ${esc(counterOpenTable)} đang mở</b> • ${counterOpenItems.reduce((a,x)=>a+x.quantity,0)} món • ${money(openTableTotal())}`;
     }
   }else{
-    if(info)info.innerHTML=`⚪ Bàn ${esc(counterOpenTable)} chưa có đơn. Chọn món rồi bấm <b>Gửi món / In tem</b>.`;
+    if(info)info.innerHTML=`⚪ Bàn ${esc(counterOpenTable)} chưa có đơn. Chọn món xong bấm <b>← Xong • Về sơ đồ bàn</b>; hệ thống sẽ tự lưu món và in tem.`;
   }
   renderCounterCart();
   publishCustomerDisplay({mode:cart.length?"order":"idle"});
 }
-async function sendCounterItems(){
-  if(!counterOpenTable)return alert("Hãy chọn bàn trước.");
-  if(!cart.length)return alert("Chưa chọn món để gửi.");
-  if(!sb)return alert("Website chưa kết nối Supabase.");
+async function sendCounterItems(opts={}){
+  if(!counterOpenTable){if(!opts.silent)alert("Hãy chọn bàn trước.");return false}
+  if(!cart.length)return true;
+  if(!sb){if(!opts.silent)alert("Website chưa kết nối Supabase.");return false}
   const snapshot=cart.map(x=>({...x}));
   const drinks=cupLabelItems(snapshot);
   const labelWindow=drinks.length?openCupLabelWindow():null;
@@ -2797,7 +2808,7 @@ async function sendCounterItems(){
     orderId=Date.now();
     const note=[openTableMarker(),"[NGUỒN: TẠI QUÁN]",staffNote?"Ghi chú: "+staffNote:""].filter(Boolean).join("\\n");
     const {error}=await sb.from("orders").insert({id:orderId,table_number:counterOpenTable,status:"Mới",note,customer_token:null});
-    if(error){if(labelWindow)labelWindow.close();return alert(error.message)}
+    if(error){if(labelWindow)labelWindow.close();if(!opts.silent)alert(error.message);return false}
     counterOpenOrderId=orderId;
   }else if(staffNote){
     const qrOrigin=(counterOpenNote||"").includes("[NGUỒN: QR]");
@@ -2809,13 +2820,14 @@ async function sendCounterItems(){
   }
   const rows=snapshot.map(x=>({order_id:orderId,menu_item_id:x.menuItemId||null,item_name:x.name,price:x.unitPrice,quantity:x.qty}));
   const r=await sb.from("order_items").insert(rows);
-  if(r.error){if(labelWindow)labelWindow.close();return alert(r.error.message)}
+  if(r.error){if(labelWindow)labelWindow.close();if(!opts.silent)alert(r.error.message);return false}
   if(drinks.length)printCupLabels(labelWindow,orderId,snapshot,staffNote);
   cart=[];setCart();
   const noteEl=document.getElementById("counterNote");if(noteEl)noteEl.value="";
   await loadOpenTable(counterOpenTable);
   toggleMobileCounterCart(false);
-  alert(`Đã gửi món cho Bàn ${counterOpenTable}. Bàn vẫn mở để gọi thêm.`);
+  if(!opts.silent)alert(`Đã lưu món cho Bàn ${counterOpenTable}.`);
+  return true;
 }
 async function payOpenTable(){
   if(!counterOpenTable)return alert("Hãy chọn bàn trước.");
