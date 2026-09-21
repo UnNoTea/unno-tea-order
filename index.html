@@ -2060,6 +2060,10 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 <style id="unno-customer-tracking-clean-v4232">
 .trackbox,.trackbar,.tracklabels{display:none!important}
 </style>
+
+<style id="unno-cancel-table-order-v241">
+#counterOrderWorkspace button.danger{background:#fff1f1!important;color:#b42318!important;border:1px solid #f2b8b5!important}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2501,7 +2505,7 @@ function renderCounter(){
       <div id="tableFloorGrid" class="table-floor-grid"></div>
     </div>
     <div id="counterOrderWorkspace" style="display:none">
-      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">← Xong • Về sơ đồ bàn</button><b id="counterWorkTable">Bàn</b></div>
+      <div class="counter-work-head"><button class="tab" onclick="backToTableFloor()">← Xong • Về sơ đồ bàn</button><button class="tab danger" onclick="cancelCurrentTableOrder()">🗑 Hủy đơn</button><b id="counterWorkTable">Bàn</b></div>
     <div class="counter-wrap">
       <div class="counter-menu">
         <div class="search-wrap"><span class="search-icon">🔎</span><input id="counterSearch" type="search" placeholder="Tìm món... (ví dụ: trà sữa, matcha, xoài, nem, trà trái cây...)" oninput="renderCounterMenu()"></div>
@@ -2747,6 +2751,36 @@ async function openTableWorkspace(n){
   const sel=document.getElementById("counterTableSelect");if(sel)sel.value=n;
   await loadOpenTable(n);
 }
+
+async function cancelCurrentTableOrder(){
+  if(!counterOpenTable)return;
+  const hasSaved=!!counterOpenOrderId;
+  const hasNew=cart.length>0;
+  if(!hasSaved&&!hasNew){
+    await backToTableFloor();
+    return;
+  }
+  const msg=hasSaved
+    ? `Hủy toàn bộ đơn của Bàn ${counterOpenTable}? Các món đã lưu sẽ bị xóa và bàn sẽ trở về trạng thái trống.`
+    : `Bỏ các món vừa chọn của Bàn ${counterOpenTable}?`;
+  if(!confirm(msg))return;
+
+  if(hasSaved){
+    if(!sb)return alert("Website chưa kết nối Supabase.");
+    // order_items are ON DELETE CASCADE in the schema, so deleting the order clears the bill.
+    const {error}=await sb.from("orders").delete().eq("id",counterOpenOrderId);
+    if(error)return alert("Không thể hủy đơn: "+error.message);
+  }
+
+  cart=[];setCart();
+  counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";
+  const oldTable=counterOpenTable;counterOpenTable="";
+  const ws=document.getElementById("counterOrderWorkspace"),floor=document.getElementById("counterTableFloor");
+  if(ws)ws.style.display="none";if(floor)floor.style.display="";
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"idle",ts:Date.now()}));
+  await refreshTableFloor();
+}
+
 let counterLeavingTable=false;
 async function backToTableFloor(){
   if(counterLeavingTable)return;
