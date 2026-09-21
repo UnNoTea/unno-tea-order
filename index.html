@@ -2158,6 +2158,18 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
   #counterOrderWorkspace .counter-cart{position:sticky!important;top:78px!important;max-height:calc(100vh - 92px)!important;overflow:auto!important}
 }
 </style>
+
+<style id="unno-history-v260">
+.history-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+#historySearch{width:min(340px,100%);height:43px;border:1px solid #dfe5df;border-radius:12px;padding:0 12px}
+.history-order{background:#fff;border:1px solid #e5e9e4;border-radius:16px;padding:14px;margin:10px 0}
+.history-title,.history-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.history-source{font-size:12px;font-weight:800;background:#f2f5f1;border-radius:999px;padding:6px 9px}
+.history-order ul{list-style:none;padding:8px 0;margin:8px 0;border-top:1px solid #eee;border-bottom:1px solid #eee}
+.history-order li{display:flex;justify-content:space-between;gap:10px;padding:4px 0}
+.history-foot{margin-bottom:9px}
+@media(max-width:650px){.history-head{display:block}#historySearch{width:100%;margin-top:9px}.history-source{white-space:nowrap}}
+</style>
 </head>
 <body>
 <header><div class="nav"><img class="logo" src="logo.jpg"><div class="brandbox"><div class="brand">UnNo Tea</div><div id="headSub" class="small">Order tại bàn • Est. 2021</div></div><div id="adminNavSlot"></div><div id="table" class="table">Bàn —</div></div></header>
@@ -2194,7 +2206,7 @@ body:has(#ordersView:not([style*="display: none"])) [data-order-status]{display:
 <div id="dash" style="display:none">
 <div id="newOrderAlert"><span>🔔 Có đơn mới!</span><button onclick="dismissNewOrderAlert()">Đã xem</button></div>
 <div class="row"><h1>Quản lý quán <span id="newOrderCount" class="new-dot" style="display:none">0</span></h1><button class="tab" onclick="logout()">Đăng xuất</button></div>
-<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng <span id="ordersTabBadge" class="orders-tab-badge" style="display:none">0</span></button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" data-v="stats">📊 Thống kê</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
+<div class="adminbar"><button class="tab active" data-v="counter">🧾 Order tại quầy</button><button class="tab" data-v="orders">Đơn hàng <span id="ordersTabBadge" class="orders-tab-badge" style="display:none">0</span></button><button class="tab" data-v="history">🕘 Lịch sử hôm nay</button><button class="tab" data-v="kitchen">Bếp</button><button class="tab" data-v="menu">Món & giá</button><button class="tab" data-v="qr">QR bàn</button><button class="tab" data-v="stats">📊 Thống kê</button><button class="tab" onclick="refreshAdmin()">↻ Làm mới</button></div>
 <div id="adminView"></div>
 </div>
 </main>
@@ -2580,6 +2592,7 @@ async function showAdmin(v){
   if(v==="menu")renderManage();
   if(v==="qr")renderQR();
   if(v==="stats")renderStats();
+  if(v==="history")renderTodayHistory();
   if(v==="orders")dismissNewOrderAlert();
   else syncOrderTabAttention();
 }
@@ -2959,34 +2972,95 @@ async function sendCounterItems(opts={}){
 }
 async function payOpenTable(){
   if(!counterOpenTable)return alert("Hãy chọn bàn trước.");
-  // Có món vừa chọn thì tự lưu vào bill + in tem, sau đó thanh toán luôn.
+
+  // Nếu có món mới, tự lưu + in tem trước. Bill vẫn CHƯA thanh toán.
   if(cart.length){
     const ok=await sendCounterItems({silent:true,stayOnTable:true});
     if(!ok)return;
   }
   if(!counterOpenOrderId)return alert("Bàn này chưa có đơn để thanh toán.");
+
   const total=openTableTotal();
+  const received=counterPaymentMethod==="cash"
+    ? Number(document.getElementById("counterCashReceived")?.value||0)
+    : 0;
+
+  if(counterPaymentMethod==="cash" && received>0 && received<total)
+    return alert("Số tiền khách đưa chưa đủ.");
+
+  // BƯỚC 1: chỉ hiển thị phương thức thanh toán lên màn hình phụ.
+  // Chưa cập nhật DB, chưa đóng bàn, chưa báo thành công.
+  publishCustomerDisplay({
+    mode:"payment",
+    total,
+    payment:counterPaymentMethod,
+    received,
+    change:Math.max(0,received-total)
+  });
+  await new Promise(r=>setTimeout(r,180));
+
+  // BƯỚC 2: nhân viên xác nhận thật sự.
+  const methodLabel=counterPaymentMethod==="transfer"?"CHUYỂN KHOẢN":"TIỀN MẶT";
+  const confirmed=confirm(
+    `Xác nhận khách đã thanh toán Bàn ${counterOpenTable}?\n\n`+
+    `Phương thức: ${methodLabel}\nTổng tiền: ${money(total)}`
+  );
+
+  // HỦY = tuyệt đối không thanh toán, không đóng bàn, không hiện thành công.
+  if(!confirmed){
+    publishCustomerDisplay({mode:"order"});
+    return;
+  }
+
   let paymentText="";
   if(counterPaymentMethod==="cash"){
-    const received=Number(document.getElementById("counterCashReceived")?.value||0);
-    if(received>0&&received<total)return alert("Số tiền khách đưa chưa đủ.");
-    paymentText=[paidMarker("cash"),received>0?"Khách đưa: "+money(received):"",received>0?"Tiền thừa: "+money(Math.max(0,received-total)):""].filter(Boolean).join("\\n");
-  }else paymentText=paidMarker("transfer")+"\\nMB BANK - 0976020701 - DINH THI MAI SEN";
+    paymentText=[
+      paidMarker("cash"),
+      received>0?"Khách đưa: "+money(received):"",
+      received>0?"Tiền thừa: "+money(Math.max(0,received-total)):""
+    ].filter(Boolean).join("\n");
+  }else{
+    paymentText=paidMarker("transfer")+"\nMB BANK - 0976020701 - DINH THI MAI SEN";
+  }
+
   const clean=(counterOpenNote||"").replace(openTableMarker(),"").trim();
-  const note=[clean,paymentText].filter(Boolean).join("\\n");
-  // Màn hình phụ phải hiện QR/tiền mặt trước khi xác nhận hoàn tất.
-  const displayReceived=counterPaymentMethod==="cash"?Number(document.getElementById("counterCashReceived")?.value||0):0;
-  publishCustomerDisplay({mode:"payment",total,payment:counterPaymentMethod,received:displayReceived,change:Math.max(0,displayReceived-total)});
-  await new Promise(r=>setTimeout(r,180));
-  const {error}=await sb.from("orders").update({note,status:"Hoàn thành"}).eq("id",counterOpenOrderId);
-  if(error)return alert(error.message);
+  const note=[clean,paymentText].filter(Boolean).join("\n");
+
+  // Chỉ tới đây mới đánh dấu thanh toán và đóng bill.
+  const {error}=await sb.from("orders")
+    .update({note,status:"Hoàn thành"})
+    .eq("id",counterOpenOrderId);
+
+  if(error){
+    publishCustomerDisplay({mode:"order"});
+    return alert(error.message);
+  }
+
   const paidId=counterOpenOrderId;
-  counterOpenOrderId=null;counterOpenItems=[];counterOpenNote="";
-  const info=document.getElementById("counterOpenInfo");if(info)info.textContent=`✅ Bàn ${counterOpenTable} đã thanh toán.`;
-  const cash=document.getElementById("counterCashReceived");if(cash)cash.value="";
+
+  // Xác nhận OK thành công rồi mới hiện Cảm ơn.
+  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({
+    mode:"thanks",
+    total,
+    payment:counterPaymentMethod,
+    ts:Date.now()
+  }));
+
+  counterOpenOrderId=null;
+  counterOpenItems=[];
+  counterOpenNote="";
+
+  const info=document.getElementById("counterOpenInfo");
+  if(info)info.textContent=`✅ Bàn ${counterOpenTable} đã thanh toán.`;
+
+  const cash=document.getElementById("counterCashReceived");
+  if(cash)cash.value="";
   updateCounterPaymentUI();
-  if(confirm(`Đã thanh toán Bàn ${counterOpenTable}: ${money(total)}\\n\\nIn hóa đơn thanh toán?`))printBill(paidId);
-  localStorage.setItem(CUSTOMER_DISPLAY_KEY,JSON.stringify({mode:"thanks",total,payment:counterPaymentMethod,ts:Date.now()}));
+
+  // Hỏi in hóa đơn sau khi giao dịch đã được xác nhận.
+  if(confirm(`Thanh toán thành công: ${money(total)}\n\nIn hóa đơn thanh toán?`)){
+    printBill(paidId);
+  }
   setTimeout(()=>backToTableFloor(),300);
 }
 
@@ -3371,6 +3445,56 @@ function localISODate(d=new Date()){
 function localISOMonth(d=new Date()){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
 }
+
+async function renderTodayHistory(){
+  counterOrdering=false;
+  const host=document.getElementById("adminView");
+  host.innerHTML='<div class="panel"><b>Đang tải lịch sử đơn hôm nay...</b></div>';
+  const now=new Date(), start=new Date(now.getFullYear(),now.getMonth(),now.getDate()), end=new Date(start);
+  end.setDate(end.getDate()+1);
+
+  const {data,error}=await sb.from("orders")
+    .select("id,table_number,status,note,created_at,customer_token,order_items(id,item_name,price,quantity)")
+    .gte("created_at",start.toISOString()).lt("created_at",end.toISOString())
+    .order("created_at",{ascending:false});
+
+  if(error){host.innerHTML=`<div class="panel">Không tải được lịch sử: ${esc(error.message)}</div>`;return}
+  const orders=data||[];
+  const totalOf=o=>(o.order_items||[]).reduce((a,i)=>a+Number(i.price||0)*Number(i.quantity||0),0);
+  const sourceOf=o=>{
+    const t=String(o.table_number||""),n=String(o.note||"");
+    if(t==="GIAO HÀNG")return "🚚 Online • Giao hàng";
+    if(t==="MANG VỀ")return "🥡 Online • Mang về";
+    if(n.includes("[NGUỒN: QR]")||o.customer_token)return "📱 Khách QR";
+    return "👨‍💼 Nhân viên tại quầy";
+  };
+  const isPaid=o=>String(o.note||"").includes("[THANH TOÁN:");
+  const grand=orders.reduce((a,o)=>a+totalOf(o),0);
+
+  host.innerHTML=`<div class="panel today-history">
+    <div class="history-head">
+      <div><h2 style="margin:0">🕘 Lịch sử đơn hôm nay</h2><div class="small">Tất cả đơn: tại quầy + QR + Online • ${orders.length} đơn • ${money(grand)}</div></div>
+      <input id="historySearch" type="search" placeholder="🔎 Tìm bàn, mã đơn, món..." oninput="filterTodayHistory()">
+    </div>
+    <div id="historyList">${orders.length?orders.map(o=>{
+      const search=[o.id,o.table_number,...(o.order_items||[]).map(i=>i.item_name)].join(" ").toLowerCase();
+      const label=/^\d+$/.test(String(o.table_number||""))?`Bàn ${esc(o.table_number)}`:esc(o.table_number);
+      return `<article class="history-order" data-search="${esc(search)}">
+        <div class="history-title"><div><b>${label}</b><div class="small">Mã #${esc(o.id)} • ${new Date(o.created_at).toLocaleString("vi-VN")}</div></div><span class="history-source">${sourceOf(o)}</span></div>
+        <ul>${(o.order_items||[]).map(i=>`<li><span>${esc(i.item_name)} × ${i.quantity}</span><b>${money(Number(i.price||0)*Number(i.quantity||0))}</b></li>`).join("")}</ul>
+        <div class="history-foot"><span>${isPaid(o)?"✅ Đã thanh toán":"🟢 Chưa thanh toán"}</span><b>${money(totalOf(o))}</b></div>
+        <button class="billbtn" onclick="printBill(${o.id})">🧾 In lại hóa đơn</button>
+      </article>`;
+    }).join(""):'<div class="empty">Hôm nay chưa có đơn.</div>'}</div>
+  </div>`;
+}
+function filterTodayHistory(){
+  const q=(document.getElementById("historySearch")?.value||"").trim().toLowerCase();
+  document.querySelectorAll("#historyList .history-order").forEach(el=>{
+    el.style.display=!q||String(el.dataset.search||"").includes(q)?"":"none";
+  });
+}
+
 function renderStats(){
   counterOrdering=false;
   document.getElementById("adminView").innerHTML=`
